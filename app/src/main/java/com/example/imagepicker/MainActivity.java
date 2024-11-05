@@ -30,6 +30,7 @@ public class MainActivity extends AppCompatActivity {
 
     private static final int pic_id = 123;
     private static final int CAMERA_REQUEST_CODE = 100;
+    private Uri cameraImageUri;
 
     // code to get the image from gallery and display it
     ActivityResultLauncher<Intent> galleryActivityResultLauncher = registerForActivityResult(
@@ -37,14 +38,21 @@ public class MainActivity extends AppCompatActivity {
             new ActivityResultCallback<ActivityResult>() {
                 @Override
                 public void onActivityResult(ActivityResult result) {
-                    // in here the code to get URI of the image user has selected
-                    if(result.getResultCode() == RESULT_OK) {
-                        Uri image_uri = result.getData().getData();
-                        imageView.setImageURI(image_uri);
-                    }
+                    if (result.getResultCode() == RESULT_OK && result.getData() != null) {
+                        Uri galleryImageUri  = result.getData().getData();
 
+                        if (galleryImageUri  != null) {
+                            Log.d("Gallery URI", String.valueOf(galleryImageUri ));
+                            imageView.setImageURI(galleryImageUri );
+                        } else {
+                            Log.d("Gallery URI", "Received null URI from gallery.");
+                        }
+                    } else {
+                        Log.d("Gallery URI", "Failed to get image from gallery.");
+                    }
                 }
             });
+
 
     ImageView imageView;
     Button galleryBtn, cameraBtn;
@@ -74,24 +82,6 @@ public class MainActivity extends AppCompatActivity {
             }
         });
 
-//        cameraBtn.setOnClickListener(new View.OnClickListener() {
-//            @Override
-//            public void onClick(View view) {
-//                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-//                    if (checkSelfPermission(Manifest.permission.CAMERA) == PackageManager.PERMISSION_DENIED || checkSelfPermission(Manifest.permission.WRITE_EXTERNAL_STORAGE) == PackageManager.PERMISSION_DENIED) {
-//                        String[] permission = {Manifest.permission.CAMERA, Manifest.permission.WRITE_EXTERNAL_STORAGE};
-//                        requestPermissions(permission, 112);
-//                    }
-//                    else {
-//                        openCamera();
-//                    }
-//                }
-//                else {
-//                    openCamera();
-//                }
-//            }
-//        });
-
         cameraBtn.setOnClickListener(v -> {
             if (ContextCompat.checkSelfPermission(this, Manifest.permission.CAMERA)
                     == PackageManager.PERMISSION_GRANTED) {
@@ -103,26 +93,15 @@ public class MainActivity extends AppCompatActivity {
         });
     }
 
-    Uri image_uri;
-    // open camera so that user can capture an image
-//    private void openCamera() {
-//        ContentValues values = new ContentValues();
-//        values.put(MediaStore.Images.Media.TITLE, "New Picture");
-//        values.put(MediaStore.Images.Media.DESCRIPTION, "From the Camera");
-//        image_uri = getContentResolver().insert(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, values);
-//        Intent cameraIntent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
-//        cameraIntent.putExtra(MediaStore.EXTRA_OUTPUT, image_uri);
-//        cameraActivityResultLauncher.launch(cameraIntent);
-//    }
-
     private void openCamera() {
         ContentValues values = new ContentValues();
         values.put(MediaStore.Images.Media.TITLE, "New Picture");
         values.put(MediaStore.Images.Media.DESCRIPTION, "From the Camera");
-        image_uri = getContentResolver().insert(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, values);
+        cameraImageUri = getContentResolver().insert(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, values);
+
         Intent camera_intent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
-        camera_intent.putExtra(MediaStore.EXTRA_OUTPUT, image_uri);
-        Log.d("URI", String.valueOf(image_uri));
+        camera_intent.putExtra(MediaStore.EXTRA_OUTPUT, cameraImageUri);
+        Log.d("Camera URI", String.valueOf(cameraImageUri));
         startActivityForResult(camera_intent, pic_id);
     }
 
@@ -142,26 +121,10 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
-//        if (requestCode == pic_id && resultCode == RESULT_OK && data != null) {
-            if(resultCode == RESULT_OK) {
 
-//            Bitmap photo = (Bitmap) data.getExtras().get("data");
-//            imageView.setImageBitmap(photo);
-            Log.d("URI retrieved", String.valueOf(image_uri));
-            imageView.setImageURI(image_uri);
+        if (requestCode == pic_id && resultCode == RESULT_OK) {
+            Log.d("URI retrieved", String.valueOf(cameraImageUri));
+            imageView.setImageURI(cameraImageUri); // use cameraImageUri
         }
     }
-
-    // capture the image using camera and display it
-    ActivityResultLauncher<Intent> cameraActivityResultLauncher = registerForActivityResult(
-            new ActivityResultContracts.StartActivityForResult(),
-            new ActivityResultCallback<ActivityResult>() {
-                @Override
-                public void onActivityResult(ActivityResult result) {
-                    if(result.getResultCode() == RESULT_OK) {
-                        imageView.setImageURI(image_uri);
-                    }
-                }
-            }
-    );
 }
