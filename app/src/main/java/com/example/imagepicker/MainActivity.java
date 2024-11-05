@@ -1,12 +1,17 @@
 package com.example.imagepicker;
 
+import android.annotation.SuppressLint;
 import android.content.ContentValues;
 import android.content.Intent;
 import android.content.pm.PackageManager;
+import android.database.Cursor;
 import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
+import android.graphics.Matrix;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
+import android.os.ParcelFileDescriptor;
 import android.provider.MediaStore;
 import android.util.Log;
 import android.view.View;
@@ -26,6 +31,9 @@ import androidx.core.graphics.Insets;
 import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
 
+import java.io.FileDescriptor;
+import java.io.IOException;
+
 public class MainActivity extends AppCompatActivity {
 
     private static final int pic_id = 123;
@@ -43,7 +51,10 @@ public class MainActivity extends AppCompatActivity {
 
                         if (galleryImageUri  != null) {
                             Log.d("Gallery URI", String.valueOf(galleryImageUri ));
-                            imageView.setImageURI(galleryImageUri );
+//                            imageView.setImageURI(galleryImageUri);
+                            Bitmap input = uriToBitmap(galleryImageUri);
+                            input = rotateBitmap(input, galleryImageUri);
+                            imageView.setImageBitmap(input);
                         } else {
                             Log.d("Gallery URI", "Received null URI from gallery.");
                         }
@@ -124,7 +135,57 @@ public class MainActivity extends AppCompatActivity {
 
         if (requestCode == pic_id && resultCode == RESULT_OK) {
             Log.d("URI retrieved", String.valueOf(cameraImageUri));
-            imageView.setImageURI(cameraImageUri); // use cameraImageUri
+            Bitmap input = uriToBitmap(cameraImageUri);
+            input = rotateBitmap(input, cameraImageUri);
+            imageView.setImageBitmap(input);
         }
+    }
+
+    //TODO takes URI of the image and returns bitmap
+
+    private Bitmap uriToBitmap(Uri selectedFileUri) {
+        try {
+            // Open a ParcelFileDescriptor for the given URI
+            ParcelFileDescriptor parcelFileDescriptor = getContentResolver().openFileDescriptor(selectedFileUri, "r");
+
+            // Get the FileDescriptor from the ParcelFileDescriptor
+            FileDescriptor fileDescriptor = parcelFileDescriptor.getFileDescriptor();
+
+            // Decode the FileDescriptor into a Bitmap
+            Bitmap image = BitmapFactory.decodeFileDescriptor(fileDescriptor);
+
+            // Close the ParcelFileDescriptor
+            parcelFileDescriptor.close();
+
+            return image;
+        } catch (IOException e) {
+            e.printStackTrace();
+            return null;
+        }
+    }
+
+    @SuppressLint("Range")
+    public Bitmap rotateBitmap(Bitmap input, Uri imageUri) {
+        String[] orientationColumn = { MediaStore.Images.Media.ORIENTATION };
+        Cursor cur = getContentResolver().query(imageUri, orientationColumn, null, null, null);
+
+        int orientation = -1;
+        if (cur != null && cur.moveToFirst()) {
+            orientation = cur.getInt(cur.getColumnIndex(MediaStore.Images.Media.ORIENTATION));
+            Log.d("tryOrientation", orientation + "");
+        }
+
+        if (cur != null) {
+            cur.close();
+        }
+
+        if (orientation != -1) {
+            Matrix rotationMatrix = new Matrix();
+            rotationMatrix.setRotate(orientation);
+            Bitmap rotatedBitmap = Bitmap.createBitmap(input, 0, 0, input.getWidth(), input.getHeight(), rotationMatrix, true);
+            return rotatedBitmap;
+        }
+
+        return input;
     }
 }
