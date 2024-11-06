@@ -20,6 +20,9 @@
         android:theme="@style/Theme.ImagePicker"
         tools:targetApi="31">
         <activity
+            android:name=".RecognitionActivity"
+            android:exported="false" />
+        <activity
             android:name=".MainActivity"
             android:exported="true">
             <intent-filter>
