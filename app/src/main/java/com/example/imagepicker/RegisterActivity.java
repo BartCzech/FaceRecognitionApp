@@ -8,32 +8,39 @@ import android.database.Cursor;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Matrix;
+import android.graphics.Rect;
 import android.net.Uri;
-import android.os.Build;
 import android.os.Bundle;
 import android.os.ParcelFileDescriptor;
 import android.provider.MediaStore;
 import android.util.Log;
 import android.view.View;
-import android.widget.Button;
 import android.widget.ImageView;
 import android.Manifest;
 
-import androidx.activity.EdgeToEdge;
 import androidx.activity.result.ActivityResult;
 import androidx.activity.result.ActivityResultCallback;
 import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
+import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.cardview.widget.CardView;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
-import androidx.core.graphics.Insets;
-import androidx.core.view.ViewCompat;
-import androidx.core.view.WindowInsetsCompat;
+
+import com.google.android.gms.tasks.OnFailureListener;
+import com.google.android.gms.tasks.OnSuccessListener;
+import com.google.android.gms.tasks.Task;
+import com.google.mlkit.vision.face.Face;
+import com.google.mlkit.vision.face.FaceDetection;
+import com.google.mlkit.vision.face.FaceDetector;
+import com.google.mlkit.vision.face.FaceDetectorOptions;
+import com.google.mlkit.vision.common.InputImage;
+import com.google.mlkit.vision.face.FaceLandmark;
 
 import java.io.FileDescriptor;
 import java.io.IOException;
+import java.util.List;
 
 public class RegisterActivity extends AppCompatActivity {
 
@@ -41,8 +48,22 @@ public class RegisterActivity extends AppCompatActivity {
     private static final int CAMERA_REQUEST_CODE = 100;
     private Uri cameraImageUri;
 
-    //TODO face detection
+    // TODO face detection
+    // High-accuracy landmark detection and face classification
+    FaceDetectorOptions highAccuracyOpts =
+            new FaceDetectorOptions.Builder()
+                    .setPerformanceMode(FaceDetectorOptions.PERFORMANCE_MODE_ACCURATE) // for live camera results this will not be efficient as FPS will go down
+                    .setLandmarkMode(FaceDetectorOptions.LANDMARK_MODE_ALL) // locations of facial features, disabled by LANDMARK_MODE_NONE
+                    .setClassificationMode(FaceDetectorOptions.CLASSIFICATION_MODE_ALL) // detect facial expressions or not, can be disabled by CLASSIFICATION_MODE_NONE
+                    .build();
 
+    // Real-time contour detection
+    //    FaceDetectorOptions realTimeOpts =
+    //            new FaceDetectorOptions.Builder()
+    //                    .setContourMode(FaceDetectorOptions.CONTOUR_MODE_ALL)
+    //                    .build();
+
+    FaceDetector detector; // just declared
     //TODO face recognition
 
     // code to get the image from gallery and display it
@@ -60,6 +81,7 @@ public class RegisterActivity extends AppCompatActivity {
                             Bitmap input = uriToBitmap(galleryImageUri);
                             input = rotateBitmap(input, galleryImageUri);
                             imageView.setImageBitmap(input);
+                            performFaceDetection(input);
                         } else {
                             Log.d("Gallery URI", "Received null URI from gallery.");
                         }
@@ -106,6 +128,9 @@ public class RegisterActivity extends AppCompatActivity {
                 ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.CAMERA}, CAMERA_REQUEST_CODE);
             }
         });
+
+        // Initializing FaceDetector
+        detector = FaceDetection.getClient(highAccuracyOpts);
     }
 
     private void openCamera() {
@@ -186,10 +211,66 @@ public class RegisterActivity extends AppCompatActivity {
         if (orientation != -1) {
             Matrix rotationMatrix = new Matrix();
             rotationMatrix.setRotate(orientation);
-            Bitmap rotatedBitmap = Bitmap.createBitmap(input, 0, 0, input.getWidth(), input.getHeight(), rotationMatrix, true);
-            return rotatedBitmap;
+            return Bitmap.createBitmap(input, 0, 0, input.getWidth(), input.getHeight(), rotationMatrix, true);
         }
 
         return input;
+    }
+
+    // Perform face detection
+    public void performFaceDetection(Bitmap bitmap){
+        InputImage image = InputImage.fromBitmap(bitmap, 0);
+        Task<List<Face>> result =
+                detector.process(image)
+                        .addOnSuccessListener(
+                                new OnSuccessListener<List<Face>>() {
+                                    @Override
+                                    public void onSuccess(List<Face> faces) {
+                                        // Task completed successfully
+                                        Log.d("tryFace", "faces len = " + faces.size());
+                                        for (Face face : faces) {
+                                            Rect bounds = face.getBoundingBox();
+                                            // Below there is a lot of interesting code from ML Kit.
+                                            // But we are not gonna need it for basic face recognition.
+
+//                                            float rotY = face.getHeadEulerAngleY();  // Head is rotated to the right rotY degrees
+//                                            float rotZ = face.getHeadEulerAngleZ();  // Head is tilted sideways rotZ degrees
+//
+//                                            // If landmark detection was enabled (mouth, ears, eyes, cheeks, and
+//                                            // nose available):
+//                                            FaceLandmark leftEar = face.getLandmark(FaceLandmark.LEFT_EAR);
+//                                            if (leftEar != null) {
+//                                                PointF leftEarPos = leftEar.getPosition();
+//                                            }
+//
+//                                            // If contour detection was enabled:
+//                                            List<PointF> leftEyeContour =
+//                                                    face.getContour(FaceContour.LEFT_EYE).getPoints();
+//                                            List<PointF> upperLipBottomContour =
+//                                                    face.getContour(FaceContour.UPPER_LIP_BOTTOM).getPoints();
+//
+//                                            // If classification was enabled:
+//                                            if (face.getSmilingProbability() != null) {
+//                                                float smileProb = face.getSmilingProbability();
+//                                            }
+//                                            if (face.getRightEyeOpenProbability() != null) {
+//                                                float rightEyeOpenProb = face.getRightEyeOpenProbability();
+//                                            }
+//
+//                                            // If face tracking was enabled:
+//                                            if (face.getTrackingId() != null) {
+//                                                int id = face.getTrackingId();
+//                                            }
+                                        }
+                                    }
+                                })
+                        .addOnFailureListener(
+                                new OnFailureListener() {
+                                    @Override
+                                    public void onFailure(@NonNull Exception e) {
+                                        // Task failed with an exception
+                                        // ...
+                                    }
+                                });
     }
 }
