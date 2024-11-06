@@ -31,6 +31,8 @@ import androidx.cardview.widget.CardView;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
 
+import com.example.imagepicker.face_recognition.FaceClassifier;
+import com.example.imagepicker.face_recognition.TFLiteFaceRecognition;
 import com.google.android.gms.tasks.OnFailureListener;
 import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.android.gms.tasks.Task;
@@ -51,7 +53,7 @@ public class RegisterActivity extends AppCompatActivity {
     private static final int CAMERA_REQUEST_CODE = 100;
     private Uri cameraImageUri;
 
-    // TODO face detection
+    // Face detector declaration
     // High-accuracy landmark detection and face classification
     FaceDetectorOptions highAccuracyOpts =
             new FaceDetectorOptions.Builder()
@@ -67,7 +69,9 @@ public class RegisterActivity extends AppCompatActivity {
     //                    .build();
 
     FaceDetector detector; // just declared
-    //TODO face recognition
+
+    // Face classifier declaration
+    FaceClassifier faceClassifier;
 
     // code to get the image from gallery and display it
     ActivityResultLauncher<Intent> galleryActivityResultLauncher = registerForActivityResult(
@@ -132,8 +136,13 @@ public class RegisterActivity extends AppCompatActivity {
             }
         });
 
-        // Initializing FaceDetector
+        // Initializing FaceDetector and FaceClassifier
         detector = FaceDetection.getClient(highAccuracyOpts);
+        try {
+            faceClassifier = TFLiteFaceRecognition.create(getAssets(), "facenet.tflite", 160, false);
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
     }
 
     private void openCamera() {
