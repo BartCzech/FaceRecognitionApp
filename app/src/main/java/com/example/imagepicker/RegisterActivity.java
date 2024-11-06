@@ -7,7 +7,10 @@ import android.content.pm.PackageManager;
 import android.database.Cursor;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
+import android.graphics.Canvas;
+import android.graphics.Color;
 import android.graphics.Matrix;
+import android.graphics.Paint;
 import android.graphics.Rect;
 import android.net.Uri;
 import android.os.Bundle;
@@ -219,6 +222,8 @@ public class RegisterActivity extends AppCompatActivity {
 
     // Perform face detection
     public void performFaceDetection(Bitmap bitmap){
+        Bitmap mutableBmp = bitmap.copy(Bitmap.Config.ARGB_8888, true); // we need to create a mutable copy of this bitmap
+        Canvas canvas = new Canvas(mutableBmp);
         InputImage image = InputImage.fromBitmap(bitmap, 0);
         Task<List<Face>> result =
                 detector.process(image)
@@ -228,8 +233,17 @@ public class RegisterActivity extends AppCompatActivity {
                                     public void onSuccess(List<Face> faces) {
                                         // Task completed successfully
                                         Log.d("tryFace", "faces len = " + faces.size());
+
                                         for (Face face : faces) {
                                             Rect bounds = face.getBoundingBox();
+
+                                            Paint p = new Paint(); // styling the rectangle
+                                            p.setColor(Color.RED);
+                                            p.setStyle(Paint.Style.STROKE);
+                                            p.setStrokeWidth(10);
+
+                                            canvas.drawRect(bounds, p);
+
                                             // Below there is a lot of interesting code from ML Kit.
                                             // But we are not gonna need it for basic face recognition.
 
@@ -262,6 +276,8 @@ public class RegisterActivity extends AppCompatActivity {
 //                                                int id = face.getTrackingId();
 //                                            }
                                         }
+
+                                        imageView.setImageBitmap(mutableBmp);
                                     }
                                 })
                         .addOnFailureListener(
