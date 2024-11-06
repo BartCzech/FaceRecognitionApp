@@ -170,6 +170,7 @@ public class RegisterActivity extends AppCompatActivity {
             Bitmap input = uriToBitmap(cameraImageUri);
             input = rotateBitmap(input, cameraImageUri);
             imageView.setImageBitmap(input);
+            performFaceDetection(input);
         }
     }
 
@@ -242,6 +243,8 @@ public class RegisterActivity extends AppCompatActivity {
                                             p.setStyle(Paint.Style.STROKE);
                                             p.setStrokeWidth(10);
 
+                                            performFaceRecognition(bounds, bitmap);
+
                                             canvas.drawRect(bounds, p);
 
                                             // Below there is a lot of interesting code from ML Kit.
@@ -276,8 +279,8 @@ public class RegisterActivity extends AppCompatActivity {
 //                                                int id = face.getTrackingId();
 //                                            }
                                         }
-
-                                        imageView.setImageBitmap(mutableBmp);
+                                        // showing whole image with highlighted faces
+//                                        imageView.setImageBitmap(mutableBmp);
                                     }
                                 })
                         .addOnFailureListener(
@@ -289,4 +292,25 @@ public class RegisterActivity extends AppCompatActivity {
                                     }
                                 });
     }
+
+    // Perform face recognition
+    public void performFaceRecognition(Rect bound, Bitmap input){
+        // Basically we will crop the area of input restricted by bound.
+        if (bound.top < 0) {
+           bound.top = 0;
+        }
+        if (bound.left < 0) {
+            bound.left = 0;
+        }
+        if (bound.right > input.getWidth()) {
+            bound.right = input.getWidth() - 1;
+        }
+        if (bound.bottom > input.getHeight()) {
+            bound.bottom = input.getHeight() - 1;
+        }
+            Bitmap croppedFace = Bitmap.createBitmap(input, bound.left, bound.top, bound.width(), bound.height());
+            // showing only cropped faces
+            imageView.setImageBitmap(croppedFace);
+    }
+
 }
