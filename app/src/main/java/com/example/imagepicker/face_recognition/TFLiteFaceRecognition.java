@@ -8,7 +8,7 @@ import android.os.Trace;
 import android.util.Pair;
 
 
-import com.example.facerecognitionimages.MainActivity;
+import com.example.imagepicker.MainActivity;
 
 import org.tensorflow.lite.Interpreter;
 
