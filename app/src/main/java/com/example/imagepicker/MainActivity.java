@@ -18,12 +18,12 @@ public class MainActivity extends AppCompatActivity {
         registerBtn = findViewById(R.id.buttonregister);
         recognizeBtn = findViewById(R.id.buttonrecognize);
 
-//        registerBtn.setOnClickListener(new View.OnClickListener() {
-//            @Override
-//            public void onClick(View view) {
-//                startActivity(new Intent(MainActivity.this,RegisterActivity.class));
-//            }
-//        });
+        registerBtn.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                startActivity(new Intent(MainActivity.this,RegisterActivity.class));
+            }
+        });
 
         recognizeBtn.setOnClickListener(new View.OnClickListener() {
             @Override
