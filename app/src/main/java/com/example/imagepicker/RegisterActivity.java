@@ -107,7 +107,7 @@ public class RegisterActivity extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_recognition);
+        setContentView(R.layout.activity_register);
 
         imageView = findViewById(R.id.imageView2);
         galleryCard = findViewById(R.id.gallerycard);
@@ -292,7 +292,7 @@ public class RegisterActivity extends AppCompatActivity {
 //                                            }
                                         }
                                         // showing whole image with highlighted faces
-//                                        imageView.setImageBitmap(mutableBmp);
+                                        imageView.setImageBitmap(mutableBmp);
                                     }
                                 })
                         .addOnFailureListener(
@@ -322,7 +322,7 @@ public class RegisterActivity extends AppCompatActivity {
         }
             Bitmap croppedFace = Bitmap.createBitmap(input, bound.left, bound.top, bound.width(), bound.height());
             // showing only cropped faces
-            imageView.setImageBitmap(croppedFace);
+//            imageView.setImageBitmap(croppedFace);
             croppedFace = Bitmap.createScaledBitmap(croppedFace, 160, 160, false);
             FaceClassifier.Recognition recognition = faceClassifier.recognizeImage(croppedFace, true);
             showRegisterDialogue(croppedFace, recognition);
