@@ -56,6 +56,9 @@ public class RegisterActivity extends AppCompatActivity {
     private static final int CAMERA_REQUEST_CODE = 100;
     private Uri cameraImageUri;
 
+    String model = MainActivity.MODEL;
+    int model_input_size = MainActivity.MODEL_INPUT_SIZE;
+
     // Face detector declaration
     // High-accuracy landmark detection and face classification
     FaceDetectorOptions highAccuracyOpts =
@@ -142,7 +145,7 @@ public class RegisterActivity extends AppCompatActivity {
         // Initializing FaceDetector and FaceClassifier
         detector = FaceDetection.getClient(highAccuracyOpts);
         try {
-            faceClassifier = TFLiteFaceRecognition.create(getAssets(), "facenet.tflite", 160, false);
+            faceClassifier = TFLiteFaceRecognition.create(getAssets(), model, model_input_size, false, getApplicationContext());
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
@@ -323,7 +326,7 @@ public class RegisterActivity extends AppCompatActivity {
             Bitmap croppedFace = Bitmap.createBitmap(input, bound.left, bound.top, bound.width(), bound.height());
             // showing only cropped faces
 //            imageView.setImageBitmap(croppedFace);
-            croppedFace = Bitmap.createScaledBitmap(croppedFace, 160, 160, false);
+            croppedFace = Bitmap.createScaledBitmap(croppedFace, model_input_size, model_input_size, false);
             FaceClassifier.Recognition recognition = faceClassifier.recognizeImage(croppedFace, true);
             showRegisterDialogue(croppedFace, recognition);
     }

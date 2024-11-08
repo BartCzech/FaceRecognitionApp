@@ -13,7 +13,14 @@ import java.util.HashMap;
 
 public class MainActivity extends AppCompatActivity {
 
-    public static HashMap<String, FaceClassifier.Recognition> registered = new HashMap<>();
+//    public static HashMap<String, FaceClassifier.Recognition> registered = new HashMap<>();
+
+    // Choosing which model to use
+    // facenet better but slower
+    // Either (mobile_face_net.tflite, 112, 192) or (facenet.tflite, 160, 512)
+    public static final String MODEL = "mobile_face_net.tflite";
+    public static final int MODEL_INPUT_SIZE = 112;
+    public static final int OUTPUT_SIZE = 192;
 
     Button registerBtn,recognizeBtn;
     @Override

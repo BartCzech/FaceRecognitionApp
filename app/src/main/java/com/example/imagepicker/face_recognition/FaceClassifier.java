@@ -34,6 +34,16 @@ public interface FaceClassifier {
             this.crop = null;
         }
 
+        public Recognition(
+                final String title, Object embedding) {
+            this.id = null;
+            this.title = title;
+            this.distance = null;
+            this.location = null;
+            this.embeeding = embedding;
+            this.crop = null;
+        }
+
         public void setEmbeeding(Object extra) {
             this.embeeding = extra;
         }

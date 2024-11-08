@@ -56,6 +56,9 @@ public class RecognitionActivity extends AppCompatActivity {
     private static final int CAMERA_REQUEST_CODE = 100;
     private Uri cameraImageUri;
 
+    String model = MainActivity.MODEL;
+    int model_input_size = MainActivity.MODEL_INPUT_SIZE;
+
     // Face detector declaration
     // High-accuracy landmark detection and face classification
     FaceDetectorOptions highAccuracyOpts =
@@ -142,7 +145,7 @@ public class RecognitionActivity extends AppCompatActivity {
         // Initializing FaceDetector and FaceClassifier
         detector = FaceDetection.getClient(highAccuracyOpts);
         try {
-            faceClassifier = TFLiteFaceRecognition.create(getAssets(), "facenet.tflite", 160, false);
+            faceClassifier = TFLiteFaceRecognition.create(getAssets(), model, model_input_size, false, getApplicationContext());
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
@@ -234,9 +237,10 @@ public class RecognitionActivity extends AppCompatActivity {
     }
 
     // Perform face detection
+    Canvas canvas;
     public void performFaceDetection(Bitmap bitmap){
         Bitmap mutableBmp = bitmap.copy(Bitmap.Config.ARGB_8888, true); // we need to create a mutable copy of this bitmap
-        Canvas canvas = new Canvas(mutableBmp);
+        canvas = new Canvas(mutableBmp);
         InputImage image = InputImage.fromBitmap(bitmap, 0);
         Task<List<Face>> result =
                 detector.process(image)
@@ -323,12 +327,26 @@ public class RecognitionActivity extends AppCompatActivity {
         Bitmap croppedFace = Bitmap.createBitmap(input, bound.left, bound.top, bound.width(), bound.height());
         // showing only cropped faces
 //            imageView.setImageBitmap(croppedFace);
-        croppedFace = Bitmap.createScaledBitmap(croppedFace, 160, 160, false);
+        croppedFace = Bitmap.createScaledBitmap(croppedFace, model_input_size, model_input_size, false);
         FaceClassifier.Recognition recognition = faceClassifier.recognizeImage(croppedFace, false);
-        Log.d("tryFR", recognition.getTitle() + " " + recognition.getDistance());
-        Toast.makeText(RecognitionActivity.this, "Face of: " + recognition.getTitle() + ", dist: " + recognition.getDistance(), Toast.LENGTH_SHORT).show();
 
+        if (recognition != null) {
+            Log.d("tryFR", recognition.getTitle() + " " + recognition.getDistance());
+            Toast.makeText(RecognitionActivity.this, "Face of: " + recognition.getTitle() + ", dist: " + recognition.getDistance(), Toast.LENGTH_SHORT).show();
+            if (recognition.getDistance() < 1) {
+                Paint p = new Paint(); // Styling the rectangle
+                p.setColor(Color.BLACK); // Border color
+                p.setTextSize(150);
+                p.setStyle(Paint.Style.STROKE);
+                p.setStrokeWidth(15); // Border thickness
+                canvas.drawText(recognition.getTitle(), bound.left, bound.top, p); // Draw border
 
+                p.setColor(Color.WHITE); // Text color
+                p.setStyle(Paint.Style.FILL);
+                canvas.drawText(recognition.getTitle(), bound.left, bound.top, p); // Draw text
+            }
+
+        }
     }
 
 }

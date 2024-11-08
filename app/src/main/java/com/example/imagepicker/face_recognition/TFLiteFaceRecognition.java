@@ -1,5 +1,6 @@
 package com.example.imagepicker.face_recognition;
 
+import android.content.Context;
 import android.content.res.AssetFileDescriptor;
 import android.content.res.AssetManager;
 import android.graphics.Bitmap;
@@ -8,6 +9,7 @@ import android.os.Trace;
 import android.util.Pair;
 
 
+import com.example.imagepicker.DB.DBHelper;
 import com.example.imagepicker.MainActivity;
 
 import org.tensorflow.lite.Interpreter;
@@ -30,7 +32,7 @@ public class TFLiteFaceRecognition
         implements FaceClassifier {
 
     //private static final int OUTPUT_SIZE = 512;
-    private static final int OUTPUT_SIZE = 512;
+    private static final int OUTPUT_SIZE = MainActivity.OUTPUT_SIZE;
 
     // Only return this many results.
     private static final int NUM_DETECTIONS = 1;
@@ -51,12 +53,19 @@ public class TFLiteFaceRecognition
 
     private Interpreter tfLite;
 
+    DBHelper dbHelper;
+
+    HashMap<String, FaceClassifier.Recognition> registered = new HashMap<>();
 
     public void register(String name, Recognition rec) {
-        MainActivity.registered.put(name, rec);
+        dbHelper.insertFace(name, rec.getEmbeeding());
+//        MainActivity.registered.put(name, rec);
     }
 
-    private TFLiteFaceRecognition() {}
+    private TFLiteFaceRecognition(Context ctx) {
+        dbHelper = new DBHelper(ctx);
+        registered = dbHelper.getAllFaces();
+    }
 
     //TODO loads the models into mapped byte buffer format
     private static MappedByteBuffer loadModelFile(AssetManager assets, String modelFilename)
@@ -75,10 +84,11 @@ public class TFLiteFaceRecognition
             final AssetManager assetManager,
             final String modelFilename,
             final int inputSize,
-            final boolean isQuantized)
+            final boolean isQuantized,
+            Context ctx)
             throws IOException {
 
-        final TFLiteFaceRecognition d = new TFLiteFaceRecognition();
+        final TFLiteFaceRecognition d = new TFLiteFaceRecognition(ctx);
         d.inputSize = inputSize;
 
         try {
@@ -105,7 +115,7 @@ public class TFLiteFaceRecognition
     // and retrurns the pair <id, distance>
     private Pair<String, Float> findNearest(float[] emb) {
         Pair<String, Float> ret = null;
-        for (Map.Entry<String, Recognition> entry : MainActivity.registered.entrySet()) {
+        for (Map.Entry<String, Recognition> entry : registered.entrySet()) {
             final String name = entry.getKey();
             final float[] knownEmb = ((float[][]) entry.getValue().getEmbeeding())[0];
 
@@ -158,7 +168,7 @@ public class TFLiteFaceRecognition
         String id = "0";
         String label = "?";
 
-        if (MainActivity.registered.size() > 0) {
+        if (registered.size() > 0) {
             final Pair<String, Float> nearest = findNearest(embeedings[0]);
             if (nearest != null) {
                 final String name = nearest.first;
