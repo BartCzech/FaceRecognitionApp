@@ -35,8 +35,8 @@ import androidx.cardview.widget.CardView;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
 
-import com.example.imagepicker.face_recognition.FaceClassifier;
-import com.example.imagepicker.face_recognition.TFLiteFaceRecognition;
+import com.example.imagepicker.Face_Recognition.FaceClassifier;
+import com.example.imagepicker.Face_Recognition.TFLiteFaceRecognition;
 import com.google.android.gms.tasks.OnFailureListener;
 import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.android.gms.tasks.Task;

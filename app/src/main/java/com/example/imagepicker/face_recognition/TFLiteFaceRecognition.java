@@ -1,38 +1,30 @@
-package com.example.imagepicker.face_recognition;
+package com.example.imagepicker.Face_Recognition;
 
 import android.content.Context;
 import android.content.res.AssetFileDescriptor;
 import android.content.res.AssetManager;
 import android.graphics.Bitmap;
 import android.graphics.RectF;
-import android.os.Trace;
 import android.util.Pair;
 
-
 import com.example.imagepicker.DB.DBHelper;
-import com.example.imagepicker.MainActivity;
 
 import org.tensorflow.lite.Interpreter;
 
-import java.io.BufferedReader;
 import java.io.FileInputStream;
 import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.nio.MappedByteBuffer;
 import java.nio.channels.FileChannel;
-import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 
 public class TFLiteFaceRecognition
         implements FaceClassifier {
 
-    //private static final int OUTPUT_SIZE = 512;
-    private static final int OUTPUT_SIZE = MainActivity.OUTPUT_SIZE;
+    private static final int OUTPUT_SIZE = 512;
+//    private static final int OUTPUT_SIZE = MainActivity.OUTPUT_SIZE;
 
     // Only return this many results.
     private static final int NUM_DETECTIONS = 1;
@@ -54,12 +46,11 @@ public class TFLiteFaceRecognition
     private Interpreter tfLite;
 
     DBHelper dbHelper;
-
-    HashMap<String, FaceClassifier.Recognition> registered = new HashMap<>();
+    public HashMap<String, FaceClassifier.Recognition> registered = new HashMap<>();
 
     public void register(String name, Recognition rec) {
         dbHelper.insertFace(name, rec.getEmbeeding());
-//        MainActivity.registered.put(name, rec);
+        registered.put(name, rec);
     }
 
     private TFLiteFaceRecognition(Context ctx) {
@@ -84,8 +75,7 @@ public class TFLiteFaceRecognition
             final AssetManager assetManager,
             final String modelFilename,
             final int inputSize,
-            final boolean isQuantized,
-            Context ctx)
+            final boolean isQuantized, Context ctx)
             throws IOException {
 
         final TFLiteFaceRecognition d = new TFLiteFaceRecognition(ctx);
@@ -190,6 +180,4 @@ public class TFLiteFaceRecognition
 
         return rec;
     }
-
-
 }

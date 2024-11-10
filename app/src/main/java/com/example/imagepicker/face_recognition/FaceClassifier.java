@@ -1,4 +1,4 @@
-package com.example.imagepicker.face_recognition;
+package com.example.imagepicker.Face_Recognition;
 
 import android.graphics.Bitmap;
 import android.graphics.RectF;

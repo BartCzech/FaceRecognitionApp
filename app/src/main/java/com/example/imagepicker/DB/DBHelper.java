@@ -15,7 +15,7 @@ import android.database.sqlite.SQLiteDatabase;
 import android.os.Build;
 import android.util.Log;
 
-import com.example.imagepicker.face_recognition.FaceClassifier;
+import com.example.imagepicker.Face_Recognition.FaceClassifier;
 
 public class DBHelper extends SQLiteOpenHelper {
 

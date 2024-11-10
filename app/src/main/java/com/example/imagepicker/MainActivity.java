@@ -7,7 +7,7 @@ import android.os.Bundle;
 import android.view.View;
 import android.widget.Button;
 
-import com.example.imagepicker.face_recognition.FaceClassifier;
+import com.example.imagepicker.Face_Recognition.FaceClassifier;
 
 import java.util.HashMap;
 
