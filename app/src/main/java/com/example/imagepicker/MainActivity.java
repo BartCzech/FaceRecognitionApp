@@ -22,7 +22,7 @@ public class MainActivity extends AppCompatActivity {
     public static final int MODEL_INPUT_SIZE = 112;
     public static final int OUTPUT_SIZE = 192;
 
-    Button registerBtn,recognizeBtn;
+    Button registerBtn, recognizeBtn, liveBtn;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -30,6 +30,7 @@ public class MainActivity extends AppCompatActivity {
 
         registerBtn = findViewById(R.id.buttonregister);
         recognizeBtn = findViewById(R.id.buttonrecognize);
+        liveBtn = findViewById(R.id.buttonlive);
 
         registerBtn.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -42,6 +43,13 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void onClick(View view) {
                 startActivity(new Intent(MainActivity.this,RecognitionActivity.class));
+            }
+        });
+
+        liveBtn.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                startActivity(new Intent(MainActivity.this, LiveActivity.class));
             }
         });
     }
