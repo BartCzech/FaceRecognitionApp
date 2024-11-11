@@ -18,9 +18,9 @@ public class MainActivity extends AppCompatActivity {
     // Choosing which model to use
     // facenet better but slower
     // Either (mobile_face_net.tflite, 112, 192) or (facenet.tflite, 160, 512)
-    public static final String MODEL = "mobile_face_net.tflite";
-    public static final int MODEL_INPUT_SIZE = 112;
-    public static final int OUTPUT_SIZE = 192;
+    public static final String MODEL = "facenet.tflite";
+    public static final int MODEL_INPUT_SIZE = 160;
+    public static final int OUTPUT_SIZE = 512;
 
     Button registerBtn, recognizeBtn, liveBtn;
     @Override

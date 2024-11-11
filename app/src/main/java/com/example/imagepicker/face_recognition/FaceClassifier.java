@@ -3,8 +3,6 @@ package com.example.imagepicker.Face_Recognition;
 import android.graphics.Bitmap;
 import android.graphics.RectF;
 
-import java.util.List;
-
 /** Generic interface for interacting with different recognition engines. */
 public interface FaceClassifier {
 
@@ -33,7 +31,6 @@ public interface FaceClassifier {
             this.embeeding = null;
             this.crop = null;
         }
-
         public Recognition(
                 final String title, Object embedding) {
             this.id = null;

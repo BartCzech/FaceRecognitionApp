@@ -1,5 +1,3 @@
-package com.example.imagepicker.Drawing;
-
 /* Copyright 2019 The TensorFlow Authors. All Rights Reserved.
 
 Licensed under the Apache License, Version 2.0 (the "License");
@@ -14,6 +12,8 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 ==============================================================================*/
+
+package com.example.imagepicker.Drawing;
 
 import android.content.Context;
 import android.graphics.Canvas;
@@ -47,4 +47,3 @@ public class OverlayView extends View {
         public void drawCallback(final Canvas canvas);
     }
 }
-

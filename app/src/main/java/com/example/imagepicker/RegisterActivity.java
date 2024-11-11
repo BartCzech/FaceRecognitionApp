@@ -312,7 +312,7 @@ public class RegisterActivity extends AppCompatActivity {
     public void performFaceRecognition(Rect bound, Bitmap input){
         // Basically we will crop the area of input restricted by bound.
         if (bound.top < 0) {
-           bound.top = 0;
+            bound.top = 0;
         }
         if (bound.left < 0) {
             bound.left = 0;
@@ -323,12 +323,12 @@ public class RegisterActivity extends AppCompatActivity {
         if (bound.bottom > input.getHeight()) {
             bound.bottom = input.getHeight() - 1;
         }
-            Bitmap croppedFace = Bitmap.createBitmap(input, bound.left, bound.top, bound.width(), bound.height());
-            // showing only cropped faces
+        Bitmap croppedFace = Bitmap.createBitmap(input, bound.left, bound.top, bound.width(), bound.height());
+        // showing only cropped faces
 //            imageView.setImageBitmap(croppedFace);
-            croppedFace = Bitmap.createScaledBitmap(croppedFace, model_input_size, model_input_size, false);
-            FaceClassifier.Recognition recognition = faceClassifier.recognizeImage(croppedFace, true);
-            showRegisterDialogue(croppedFace, recognition);
+        croppedFace = Bitmap.createScaledBitmap(croppedFace, model_input_size, model_input_size, false);
+        FaceClassifier.Recognition recognition = faceClassifier.recognizeImage(croppedFace, true);
+        showRegisterDialogue(croppedFace, recognition);
     }
     // here showing a dialogue where the user can enter a name for this particular face
     public void showRegisterDialogue(Bitmap face, FaceClassifier.Recognition recognition){

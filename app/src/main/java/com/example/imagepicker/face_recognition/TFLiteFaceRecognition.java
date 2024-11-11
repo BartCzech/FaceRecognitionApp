@@ -23,8 +23,8 @@ import java.util.Map;
 public class TFLiteFaceRecognition
         implements FaceClassifier {
 
+    //private static final int OUTPUT_SIZE = 512;
     private static final int OUTPUT_SIZE = 512;
-//    private static final int OUTPUT_SIZE = MainActivity.OUTPUT_SIZE;
 
     // Only return this many results.
     private static final int NUM_DETECTIONS = 1;
@@ -45,11 +45,11 @@ public class TFLiteFaceRecognition
 
     private Interpreter tfLite;
 
+    public HashMap<String, Recognition> registered = new HashMap<>();
     DBHelper dbHelper;
-    public HashMap<String, FaceClassifier.Recognition> registered = new HashMap<>();
 
     public void register(String name, Recognition rec) {
-        dbHelper.insertFace(name, rec.getEmbeeding());
+        dbHelper.insertFace(name,rec.getEmbeeding());
         registered.put(name, rec);
     }
 
@@ -75,7 +75,7 @@ public class TFLiteFaceRecognition
             final AssetManager assetManager,
             final String modelFilename,
             final int inputSize,
-            final boolean isQuantized, Context ctx)
+            final boolean isQuantized,Context ctx)
             throws IOException {
 
         final TFLiteFaceRecognition d = new TFLiteFaceRecognition(ctx);
@@ -180,4 +180,6 @@ public class TFLiteFaceRecognition
 
         return rec;
     }
+
+
 }
