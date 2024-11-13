@@ -5,6 +5,7 @@ import android.content.res.AssetFileDescriptor;
 import android.content.res.AssetManager;
 import android.graphics.Bitmap;
 import android.graphics.RectF;
+import android.os.Build;
 import android.util.Pair;
 
 import com.example.imagepicker.DB.DBHelper;
@@ -17,11 +18,17 @@ import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.nio.MappedByteBuffer;
 import java.nio.channels.FileChannel;
+import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 public class TFLiteFaceRecognition
         implements FaceClassifier {
+
+    // This variable will determine how much (%) the face on the input image is similar to a registered face
+    private static final float MAX_DISTANCE_THRESHOLD = 1.4f;
 
     //private static final int OUTPUT_SIZE = 512;
     private static final int OUTPUT_SIZE = 512;
@@ -104,7 +111,8 @@ public class TFLiteFaceRecognition
     //TODO  looks for the nearest embeeding in the dataset
     // and retrurns the pair <id, distance>
     private Pair<String, Float> findNearest(float[] emb) {
-        Pair<String, Float> ret = null;
+        List<Pair<String, Float>> nearestList = new ArrayList<>();
+
         for (Map.Entry<String, Recognition> entry : registered.entrySet()) {
             final String name = entry.getKey();
             final float[] knownEmb = ((float[][]) entry.getValue().getEmbeeding())[0];
@@ -115,11 +123,32 @@ public class TFLiteFaceRecognition
                 distance += diff*diff;
             }
             distance = (float) Math.sqrt(distance);
-            if (ret == null || distance < ret.second) {
-                ret = new Pair<>(name, distance);
-            }
+
+            nearestList.add(new Pair<>(name, distance));
         }
-        return ret;
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
+            nearestList.sort(Comparator.comparing(pair -> pair.second));
+        }
+
+        // Log the top 3 nearest faces
+        for (int i = 0; i < Math.min(3, nearestList.size()); i++) {
+            Pair<String, Float> match = nearestList.get(i);
+            float confidence = calculateConfidence(match.second);
+            System.out.println("Top " + (i + 1) + ": Name = " + match.first + ", Distance = " + match.second +
+                    ", Confidence = " + confidence + "%");
+        }
+
+        // Return the closest face
+        return nearestList.isEmpty() ? null : nearestList.get(0);
+    }
+
+    // Method to calculate confidence based on the distance
+    private float calculateConfidence(float distance) {
+        if (distance > MAX_DISTANCE_THRESHOLD) {
+            return 0.0f; // Beyond the threshold, it's considered an unlikely match
+        }
+        // Calculate confidence as a percentage, inversely proportional to the distance
+        return (1 - (distance / MAX_DISTANCE_THRESHOLD)) * 100;
     }
 
 
