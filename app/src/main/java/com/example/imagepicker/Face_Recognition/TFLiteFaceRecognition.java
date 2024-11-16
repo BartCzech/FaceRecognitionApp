@@ -142,6 +142,39 @@ public class TFLiteFaceRecognition
         return nearestList.isEmpty() ? null : nearestList.get(0);
     }
 
+    private List<Pair<String, Float>> findThreeClosest(float[] emb) {
+        List<Pair<String, Float>> nearestList = new ArrayList<>();
+
+        for (Map.Entry<String, Recognition> entry : registered.entrySet()) {
+            final String name = entry.getKey();
+            final float[] knownEmb = ((float[][]) entry.getValue().getEmbeeding())[0];
+
+            float distance = 0;
+            for (int i = 0; i < emb.length; i++) {
+                float diff = emb[i] - knownEmb[i];
+                distance += diff * diff;
+            }
+            distance = (float) Math.sqrt(distance);
+
+            nearestList.add(new Pair<>(name, distance));
+        }
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
+            nearestList.sort(Comparator.comparing(pair -> pair.second));
+        }
+
+        // Log the top 3 nearest faces
+        for (int i = 0; i < Math.min(3, nearestList.size()); i++) {
+            Pair<String, Float> match = nearestList.get(i);
+            float confidence = calculateConfidence(match.second);
+            System.out.println("Top " + (i + 1) + ": Name = " + match.first + ", Distance = " + match.second +
+                    ", Confidence = " + confidence + "%");
+        }
+
+        // Return the top 3 nearest faces
+        return nearestList.subList(0, Math.min(3, nearestList.size()));
+    }
+
+
     // Method to calculate confidence based on the distance
     private float calculateConfidence(float distance) {
         if (distance > MAX_DISTANCE_THRESHOLD) {
@@ -210,5 +243,51 @@ public class TFLiteFaceRecognition
         return rec;
     }
 
+    @Override
+    public List<Recognition> recognizeThreeFromImage(Bitmap bitmap, boolean storeExtra) {
+        List<Recognition> recognitionList = new ArrayList<>();
 
+        bitmap.getPixels(intValues, 0, bitmap.getWidth(), 0, 0, bitmap.getWidth(), bitmap.getHeight());
+        imgData.rewind();
+        for (int i = 0; i < inputSize; ++i) {
+            for (int j = 0; j < inputSize; ++j) {
+                int pixelValue = intValues[i * inputSize + j];
+                if (isModelQuantized) {
+                    imgData.put((byte) ((pixelValue >> 16) & 0xFF));
+                    imgData.put((byte) ((pixelValue >> 8) & 0xFF));
+                    imgData.put((byte) (pixelValue & 0xFF));
+                } else {
+                    imgData.putFloat((((pixelValue >> 16) & 0xFF) - IMAGE_MEAN) / IMAGE_STD);
+                    imgData.putFloat((((pixelValue >> 8) & 0xFF) - IMAGE_MEAN) / IMAGE_STD);
+                    imgData.putFloat(((pixelValue & 0xFF) - IMAGE_MEAN) / IMAGE_STD);
+                }
+            }
+        }
+
+        Object[] inputArray = {imgData};
+        Map<Integer, Object> outputMap = new HashMap<>();
+        embeedings = new float[1][OUTPUT_SIZE];
+        outputMap.put(0, embeedings);
+
+        tfLite.runForMultipleInputsOutputs(inputArray, outputMap);
+
+        if (registered.size() > 0) {
+            List<Pair<String, Float>> threeClosest = findThreeClosest(embeedings[0]);
+            for (Pair<String, Float> pair : threeClosest) {
+                Recognition recognition = new Recognition(
+                        "0",  // Placeholder for ID
+                        pair.first,  // Name
+                        pair.second,  // Distance
+                        new RectF()  // Default location
+                );
+
+                if (storeExtra) {
+                    recognition.setEmbeeding(embeedings);
+                }
+
+                recognitionList.add(recognition);
+            }
+        }
+        return recognitionList;
+    }
 }

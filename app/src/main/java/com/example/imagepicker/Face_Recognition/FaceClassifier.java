@@ -3,12 +3,16 @@ package com.example.imagepicker.Face_Recognition;
 import android.graphics.Bitmap;
 import android.graphics.RectF;
 
+import java.util.List;
+
 /** Generic interface for interacting with different recognition engines. */
 public interface FaceClassifier {
 
     void register(String name, Recognition recognition);
 
     Recognition recognizeImage(Bitmap bitmap, boolean getExtra);
+
+    List<Recognition> recognizeThreeFromImage(Bitmap bitmap, boolean getExtra);
 
     public class Recognition {
         private final String id;

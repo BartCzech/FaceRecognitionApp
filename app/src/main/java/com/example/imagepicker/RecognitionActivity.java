@@ -330,9 +330,15 @@ public class RecognitionActivity extends AppCompatActivity {
         croppedFace = Bitmap.createScaledBitmap(croppedFace, model_input_size, model_input_size, false);
         FaceClassifier.Recognition recognition = faceClassifier.recognizeImage(croppedFace, false);
 
+        List<FaceClassifier.Recognition> recognitions = faceClassifier.recognizeThreeFromImage(croppedFace, false);
+
+        for (FaceClassifier.Recognition rec : recognitions) {
+            Toast.makeText(RecognitionActivity.this, "Face of: " + rec.getTitle() + ", dist: " + rec.getDistance(), Toast.LENGTH_SHORT).show();
+        }
+
         if (recognition != null) {
             Log.d("tryFR", recognition.getTitle() + " " + recognition.getDistance());
-            Toast.makeText(RecognitionActivity.this, "Face of: " + recognition.getTitle() + ", dist: " + recognition.getDistance(), Toast.LENGTH_SHORT).show();
+//            Toast.makeText(RecognitionActivity.this, "Face of: " + recognition.getTitle() + ", dist: " + recognition.getDistance(), Toast.LENGTH_SHORT).show();
             if (recognition.getDistance() < 1) {
                 Paint p = new Paint(); // Styling the rectangle
                 p.setColor(Color.BLACK); // Border color
