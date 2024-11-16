@@ -23,6 +23,7 @@ import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ImageView;
 import android.Manifest;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.activity.result.ActivityResult;
@@ -52,6 +53,9 @@ import java.util.List;
 
 public class RecognitionActivity extends AppCompatActivity {
 
+    // This variable will determine how much (%) the face on the input image is similar to a registered face
+    private static final float MAX_DISTANCE_THRESHOLD = 1.4f;
+
     private static final int pic_id = 123;
     private static final int CAMERA_REQUEST_CODE = 100;
     private Uri cameraImageUri;
@@ -78,6 +82,8 @@ public class RecognitionActivity extends AppCompatActivity {
 
     // Face classifier declaration
     FaceClassifier faceClassifier;
+
+    List<FaceClassifier.Recognition> recognitions;
 
     // code to get the image from gallery and display it
     ActivityResultLauncher<Intent> galleryActivityResultLauncher = registerForActivityResult(
@@ -330,11 +336,11 @@ public class RecognitionActivity extends AppCompatActivity {
         croppedFace = Bitmap.createScaledBitmap(croppedFace, model_input_size, model_input_size, false);
         FaceClassifier.Recognition recognition = faceClassifier.recognizeImage(croppedFace, false);
 
-        List<FaceClassifier.Recognition> recognitions = faceClassifier.recognizeThreeFromImage(croppedFace, false);
+        recognitions = faceClassifier.recognizeThreeFromImage(croppedFace, false);
 
-        for (FaceClassifier.Recognition rec : recognitions) {
-            Toast.makeText(RecognitionActivity.this, "Face of: " + rec.getTitle() + ", dist: " + rec.getDistance(), Toast.LENGTH_SHORT).show();
-        }
+//        for (FaceClassifier.Recognition rec : recognitions) {
+//            Toast.makeText(RecognitionActivity.this, "Face of: " + rec.getTitle() + ", dist: " + rec.getDistance(), Toast.LENGTH_SHORT).show();
+//        }
 
         if (recognition != null) {
             Log.d("tryFR", recognition.getTitle() + " " + recognition.getDistance());
@@ -351,8 +357,57 @@ public class RecognitionActivity extends AppCompatActivity {
                 p.setStyle(Paint.Style.FILL);
                 canvas.drawText(recognition.getTitle(), bound.left, bound.top, p); // Draw text
             }
-
+            updateRecognitionResults(recognitions);
         }
     }
 
+    private void updateRecognitionResults(List<FaceClassifier.Recognition> recognitions) {
+        // Get references to the views
+        TextView instructionText = findViewById(R.id.instructionText);
+        TextView recognitionTitle = findViewById(R.id.recognitionTitle);
+        TextView recognition1 = findViewById(R.id.recognition1);
+        TextView recognition2 = findViewById(R.id.recognition2);
+        TextView recognition3 = findViewById(R.id.recognition3);
+
+        // Hide the instruction text
+        instructionText.setVisibility(View.GONE);
+
+        // Show the recognition results layout
+        recognitionTitle.setVisibility(View.VISIBLE);
+
+        // Update the text and visibility for each recognition result dynamically
+        if (recognitions.size() > 0) {
+            float confidence1 = calculateConfidence(recognitions.get(0).getDistance());
+            recognition1.setText("1. " + recognitions.get(0).getTitle() + " " + String.format("%.2f", confidence1) + "%");
+            recognition1.setVisibility(View.VISIBLE);
+        } else {
+            recognition1.setVisibility(View.GONE);
+        }
+
+        if (recognitions.size() > 1) {
+            float confidence2 = calculateConfidence(recognitions.get(1).getDistance());
+            recognition2.setText("2. " + recognitions.get(1).getTitle() + " " + String.format("%.2f", confidence2) + "%");
+            recognition2.setVisibility(View.VISIBLE);
+        } else {
+            recognition2.setVisibility(View.GONE);
+        }
+
+        if (recognitions.size() > 2) {
+            float confidence3 = calculateConfidence(recognitions.get(2).getDistance());
+            recognition3.setText("3. " + recognitions.get(2).getTitle() + " " + String.format("%.2f", confidence3) + "%");
+            recognition3.setVisibility(View.VISIBLE);
+        } else {
+            recognition3.setVisibility(View.GONE);
+        }
+    }
+
+
+    // Method to calculate confidence based on the distance
+    private float calculateConfidence(float distance) {
+        if (distance > MAX_DISTANCE_THRESHOLD) {
+            return 0.0f; // Beyond the threshold, it's considered an unlikely match
+        }
+        // Calculate confidence as a percentage, inversely proportional to the distance
+        return (1 - (distance / MAX_DISTANCE_THRESHOLD)) * 100;
+    }
 }
