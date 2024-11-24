@@ -38,6 +38,7 @@ import androidx.core.content.ContextCompat;
 
 import com.example.imagepicker.Face_Recognition.FaceClassifier;
 import com.example.imagepicker.Face_Recognition.TFLiteFaceRecognition;
+import com.example.imagepicker.Face_Recognition.CelebRecognitionTFLite;
 import com.google.android.gms.tasks.OnFailureListener;
 import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.android.gms.tasks.Task;
@@ -47,9 +48,17 @@ import com.google.mlkit.vision.face.FaceDetector;
 import com.google.mlkit.vision.face.FaceDetectorOptions;
 import com.google.mlkit.vision.common.InputImage;
 
+import java.io.BufferedReader;
 import java.io.FileDescriptor;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.PriorityQueue;
+
+import android.util.Pair;
+
 
 public class RecognitionActivity extends AppCompatActivity {
 
@@ -113,6 +122,8 @@ public class RecognitionActivity extends AppCompatActivity {
     CardView galleryCard,cameraCard;
     ImageView imageView;
 
+    private String[] celebNames;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -121,6 +132,14 @@ public class RecognitionActivity extends AppCompatActivity {
         imageView = findViewById(R.id.imageView2);
         galleryCard = findViewById(R.id.gallerycard);
         cameraCard = findViewById(R.id.cameracard);
+
+        // Load celebrity names from CSV
+        celebNames = loadCelebNamesFromCsv();
+
+        // Debugging: Log the first few names to ensure it's loaded correctly
+        for (int i = 0; i < Math.min(10, celebNames.length); i++) {
+            Log.d("CelebRecognition", "Loaded celeb name: " + celebNames[i]);
+        }
 
         // ask for permission of camera upon the first launch of the app
 //        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
@@ -333,14 +352,21 @@ public class RecognitionActivity extends AppCompatActivity {
         Bitmap croppedFace = Bitmap.createBitmap(input, bound.left, bound.top, bound.width(), bound.height());
         // showing only cropped faces
 //            imageView.setImageBitmap(croppedFace);
+        // Create a separate, different size bitmap for celeb face
+        Bitmap celebScaledFace = Bitmap.createScaledBitmap(croppedFace, 256, 256, false); //
+
         croppedFace = Bitmap.createScaledBitmap(croppedFace, model_input_size, model_input_size, false);
         FaceClassifier.Recognition recognition = faceClassifier.recognizeImage(croppedFace, false);
 
         recognitions = faceClassifier.recognizeThreeFromImage(croppedFace, false);
 
+
 //        for (FaceClassifier.Recognition rec : recognitions) {
 //            Toast.makeText(RecognitionActivity.this, "Face of: " + rec.getTitle() + ", dist: " + rec.getDistance(), Toast.LENGTH_SHORT).show();
 //        }
+
+        //TODO: Step 2: Process cropped face for celebrity recognition (256x256)
+        performCelebRecognition(celebScaledFace); // Call celeb recognition
 
         if (recognition != null) {
             Log.d("tryFR", recognition.getTitle() + " " + recognition.getDistance());
@@ -410,4 +436,88 @@ public class RecognitionActivity extends AppCompatActivity {
         // Calculate confidence as a percentage, inversely proportional to the distance
         return (1 - (distance / MAX_DISTANCE_THRESHOLD)) * 100;
     }
+
+
+    //TODO: Celeb face recognition
+    public void performCelebRecognition(Bitmap inputBitmap) {
+        // Load the TFLite model
+        CelebRecognitionTFLite celebModel = new CelebRecognitionTFLite(getAssets(), "celeb_recognition.tflite");
+
+        // Run the model
+        float[] output = celebModel.recognize(inputBitmap);
+
+        // Sum up probabilities to check for proper softmax behavior
+        float sum = 0;
+        for (float value : output) {
+            sum += value;
+        }
+        Log.d("ModelOutput", "Sum of probabilities: " + sum);
+
+        // Log the top 5 predictions
+        PriorityQueue<Pair<Integer, Float>> pq = new PriorityQueue<>(5, (a, b) -> Float.compare(b.second, a.second));
+        for (int i = 0; i < output.length; i++) {
+            pq.add(new Pair<>(i, output[i]));
+        }
+        for (int i = 0; i < 5 && !pq.isEmpty(); i++) {
+            Pair<Integer, Float> top = pq.poll();
+            Log.d("ModelOutput", "Index: " + top.first + ", Confidence: " + (top.second * 100) + "%, Name: " + getCelebrityNameFromIndex(top.first));
+        }
+        // Find the top prediction
+        int maxIndex = -1;
+        float maxValue = -1.0f;
+        for (int i = 0; i < output.length; i++) {
+            if (output[i] > maxValue) {
+                maxValue = output[i];
+                maxIndex = i;
+            }
+        }
+
+        // Map index to celebrity name
+        String celebName = getCelebrityNameFromIndex(maxIndex);
+
+        // Log and update UI
+        Log.d("CelebRecognition", "Recognized as: " + celebName + " with confidence: " + (maxValue * 100) + "%");
+        float finalMaxValue = maxValue;
+        runOnUiThread(() -> {
+            Toast.makeText(this, "You resemble " + celebName + " (" + (finalMaxValue * 100) + "%)", Toast.LENGTH_LONG).show();
+        });
+
+        celebModel.close(); // Clean up resources
+    }
+
+    private String[] loadCelebNamesFromCsv() {
+        List<String> names = new ArrayList<>();
+        try {
+            // Open the CSV file from assets
+            InputStream is = getAssets().open("celeb_names.csv");
+            BufferedReader reader = new BufferedReader(new InputStreamReader(is));
+
+            String line;
+            boolean isHeader = true; // Skip the header row
+            while ((line = reader.readLine()) != null) {
+                if (isHeader) {
+                    isHeader = false; // Skip the first line (header)
+                    continue;
+                }
+                // Split the line by commas
+                String[] parts = line.split(",");
+                if (parts.length > 1) {
+                    names.add(parts[1].trim()); // Add the name (second column) to the list
+                }
+            }
+            reader.close();
+        } catch (IOException e) {
+            Log.e("CelebRecognition", "Error reading celeb_names.csv: " + e.getMessage());
+            e.printStackTrace();
+        }
+
+        return names.toArray(new String[0]); // Convert the list to an array
+    }
+
+
+    // Implement mapping from index to celebrity name
+    private String getCelebrityNameFromIndex(int index) {
+        return index >= 0 && index < celebNames.length ? celebNames[index] : "Unknown";
+    }
+
 }
