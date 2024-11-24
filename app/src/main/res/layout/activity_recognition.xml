@@ -42,7 +42,7 @@
             android:text="Choose an image from the gallery or take a picture using the camera to see who you resemble the most! The results will be displayed here."
             android:textSize="16sp"
             android:textAlignment="center"
-            android:textColor="@color/black"
+            android:textColor="@color/text_primary"
             android:padding="8dp" />
 
         <!-- Result text hidden by default -->
@@ -53,7 +53,7 @@
             android:text="You look like:"
             android:textStyle="bold"
             android:textSize="18sp"
-            android:textColor="@color/black"
+            android:textColor="@color/text_primary"
             android:visibility="gone" />
 
         <TextView
@@ -63,7 +63,7 @@
             android:text="1. Person1 90%"
             android:textSize="16sp"
             android:layout_marginTop="4dp"
-            android:textColor="@color/black"
+            android:textColor="@color/text_primary"
             android:visibility="gone" />
 
         <TextView
@@ -73,7 +73,7 @@
             android:text="2. Person2 80%"
             android:textSize="16sp"
             android:layout_marginTop="4dp"
-            android:textColor="@color/black"
+            android:textColor="@color/text_primary"
             android:visibility="gone" />
 
         <TextView
@@ -83,7 +83,7 @@
             android:text="3. Person3 70%"
             android:textSize="16sp"
             android:layout_marginTop="4dp"
-            android:textColor="@color/black"
+            android:textColor="@color/text_primary"
             android:visibility="gone" />
 
     </LinearLayout>
