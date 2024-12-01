@@ -36,6 +36,7 @@ import androidx.appcompat.app.AppCompatActivity;
 import com.example.imagepicker.Drawing.BorderedText;
 import com.example.imagepicker.Drawing.MultiBoxTracker;
 import com.example.imagepicker.Drawing.OverlayView;
+import com.example.imagepicker.Face_Recognition.CelebRecognitionTFLite;
 import com.example.imagepicker.Face_Recognition.FaceClassifier;
 import com.example.imagepicker.Face_Recognition.TFLiteFaceRecognition;
 import com.example.imagepicker.LiveFeed.CameraConnectionFragment;
@@ -48,7 +49,10 @@ import com.google.mlkit.vision.face.FaceDetection;
 import com.google.mlkit.vision.face.FaceDetector;
 import com.google.mlkit.vision.face.FaceDetectorOptions;
 
+import java.io.BufferedReader;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.List;
@@ -70,6 +74,8 @@ public class LiveActivity extends AppCompatActivity implements ImageReader.OnIma
     private static final String KEY_USE_FACING = "use_facing";
     private static final int CROP_SIZE = 1000;
     private static final int TF_OD_API_INPUT_SIZE2 = 160;
+
+    private String[] celebNames;
 
     //TODO delcare face detector
     FaceDetector detector;
@@ -150,6 +156,8 @@ public class LiveActivity extends AppCompatActivity implements ImageReader.OnIma
                 switchCamera();
             }
         });
+
+        celebNames = loadCelebNamesFromCsv();
 
     }
 
@@ -347,7 +355,9 @@ public class LiveActivity extends AppCompatActivity implements ImageReader.OnIma
 
                                         for(Face face:faces) {
                                             final Rect bounds = face.getBoundingBox();
-                                            performFaceRecognition(face);
+//                                            performFaceRecognition(face);
+                                            performCelebRecognition(face);
+
                                         }
                                         registerFace = false;
                                         tracker.trackResults(mappedRecognitions, 10);
@@ -373,7 +383,7 @@ public class LiveActivity extends AppCompatActivity implements ImageReader.OnIma
 
     //TODO perform face recognition
     public void performFaceRecognition(Face face){
-        //TODO crop the face
+        // crop the face
         Rect bounds = face.getBoundingBox();
         if(bounds.top<0){
             bounds.top = 0;
@@ -421,6 +431,97 @@ public class LiveActivity extends AppCompatActivity implements ImageReader.OnIma
             mappedRecognitions.add(recognition);
         }
 
+    }
+
+    //TODO: Celebrity recognition (256x256)
+    public void performCelebRecognition(Face face) {
+        CelebRecognitionTFLite celebModel = new CelebRecognitionTFLite(getAssets(), "celeb_recognition.tflite");
+
+        // crop the face
+        Rect bounds = face.getBoundingBox();
+        if(bounds.top<0){
+            bounds.top = 0;
+        }
+        if(bounds.left<0){
+            bounds.left = 0;
+        }
+        if(bounds.left+bounds.width()>croppedBitmap.getWidth()){
+            bounds.right = croppedBitmap.getWidth()-1;
+        }
+        if(bounds.top+bounds.height()>croppedBitmap.getHeight()){
+            bounds.bottom = croppedBitmap.getHeight()-1;
+        }
+
+        Bitmap crop = Bitmap.createBitmap(croppedBitmap,
+                bounds.left,
+                bounds.top,
+                bounds.width(),
+                bounds.height());
+        crop = Bitmap.createScaledBitmap(crop, 256, 256,false);
+
+        final float[] output = celebModel.recognize(crop);
+
+        // Find the top prediction
+        int maxIndex = -1;
+        float maxConfidence = -1.0f;
+        for (int i = 0; i < output.length; i++) {
+            if (output[i] > maxConfidence) {
+                maxConfidence = output[i];
+                maxIndex = i;
+            }
+        }
+
+        // Map index to celebrity name and calculate confidence percentage
+        String celebName = getCelebrityNameFromIndex(maxIndex);
+        float confidence = maxConfidence * 100;
+
+        // Log the result
+        Log.d("ModelOutput", "Name: " + celebName + ", Confidence: " + confidence + "%");
+
+        RectF location = new RectF(bounds);
+        if (bounds != null) {
+            if(useFacing == CameraCharacteristics.LENS_FACING_BACK) {
+                location.right = croppedBitmap.getWidth() - location.right;
+                location.left = croppedBitmap.getWidth() - location.left;
+            }
+            cropToFrameTransform.mapRect(location);
+            FaceClassifier.Recognition recognition = new FaceClassifier.Recognition(face.getTrackingId()+"",celebName,confidence,location);
+            mappedRecognitions.add(recognition);
+        }
+    }
+
+    // Implement mapping from index to celebrity name
+    private String getCelebrityNameFromIndex(int index) {
+        return index >= 0 && index < celebNames.length ? celebNames[index] : "Unknown";
+    }
+
+    private String[] loadCelebNamesFromCsv() {
+        List<String> names = new ArrayList<>();
+        try {
+            // Open the CSV file from assets
+            InputStream is = getAssets().open("celeb_names.csv");
+            BufferedReader reader = new BufferedReader(new InputStreamReader(is));
+
+            String line;
+            boolean isHeader = true; // Skip the header row
+            while ((line = reader.readLine()) != null) {
+                if (isHeader) {
+                    isHeader = false; // Skip the first line (header)
+                    continue;
+                }
+                // Split the line by commas
+                String[] parts = line.split(",");
+                if (parts.length > 1) {
+                    names.add(parts[1].trim()); // Add the name (second column) to the list
+                }
+            }
+            reader.close();
+        } catch (IOException e) {
+            Log.e("CelebRecognition", "Error reading celeb_names.csv: " + e.getMessage());
+            e.printStackTrace();
+        }
+
+        return names.toArray(new String[0]); // Convert the list to an array
     }
 
     @Override
