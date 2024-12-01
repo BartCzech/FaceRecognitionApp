@@ -384,7 +384,7 @@ public class RecognitionActivity extends AppCompatActivity {
                 canvas.drawText(recognition.getTitle(), bound.left, bound.top, p); // Draw text
             }
             // Update face results with facenet
-//            updateRecognitionResults(recognitions);
+            updateRecognitionResults(recognitions);
         }
     }
 
@@ -489,7 +489,7 @@ public class RecognitionActivity extends AppCompatActivity {
         });
 
         // Update face results with custom model
-        updateCelebRecognitionResults(celeb_recogs);
+//        updateCelebRecognitionResults(celeb_recogs);
 
 
         celebModel.close(); // Clean up resources
