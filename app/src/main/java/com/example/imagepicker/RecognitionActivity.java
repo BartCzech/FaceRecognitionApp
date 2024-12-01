@@ -383,7 +383,8 @@ public class RecognitionActivity extends AppCompatActivity {
                 p.setStyle(Paint.Style.FILL);
                 canvas.drawText(recognition.getTitle(), bound.left, bound.top, p); // Draw text
             }
-            updateRecognitionResults(recognitions);
+            // Update face results with facenet
+//            updateRecognitionResults(recognitions);
         }
     }
 
@@ -458,10 +459,15 @@ public class RecognitionActivity extends AppCompatActivity {
         for (int i = 0; i < output.length; i++) {
             pq.add(new Pair<>(i, output[i]));
         }
+
+        Pair<String, Float>[] celeb_recogs = new Pair[5];
         for (int i = 0; i < 5 && !pq.isEmpty(); i++) {
             Pair<Integer, Float> top = pq.poll();
-            Log.d("ModelOutput", "Index: " + top.first + ", Confidence: " + (top.second * 100) + "%, Name: " + getCelebrityNameFromIndex(top.first));
+            celeb_recogs[i] = new Pair<>(getCelebrityNameFromIndex(top.first), top.second * 100);
+//            Log.d("ModelOutput", "Index: " + top.first + ", Confidence: " + (top.second * 100) + "%, Name: " + getCelebrityNameFromIndex(top.first));
+            Log.d("ModelOutput", "Name: " + celeb_recogs[i].first + ", Confidence: " + celeb_recogs[i].second + "%");
         }
+
         // Find the top prediction
         int maxIndex = -1;
         float maxValue = -1.0f;
@@ -482,8 +488,50 @@ public class RecognitionActivity extends AppCompatActivity {
             Toast.makeText(this, "You resemble " + celebName + " (" + (finalMaxValue * 100) + "%)", Toast.LENGTH_LONG).show();
         });
 
+        // Update face results with custom model
+        updateCelebRecognitionResults(celeb_recogs);
+
+
         celebModel.close(); // Clean up resources
     }
+
+    private void updateCelebRecognitionResults(Pair<String, Float>[] celeb_recogs) {
+        // Get references to the views
+        TextView instructionText = findViewById(R.id.instructionText);
+        TextView recognitionTitle = findViewById(R.id.recognitionTitle);
+        TextView recognition1 = findViewById(R.id.recognition1);
+        TextView recognition2 = findViewById(R.id.recognition2);
+        TextView recognition3 = findViewById(R.id.recognition3);
+
+        // Hide the instruction text
+        instructionText.setVisibility(View.GONE);
+
+        // Show the recognition results layout
+        recognitionTitle.setVisibility(View.VISIBLE);
+
+        // Update the text and visibility for each recognition result dynamically
+        if (celeb_recogs[0] != null) {
+            recognition1.setText("1. " + celeb_recogs[0].first + " " + String.format("%.2f", celeb_recogs[0].second) + "%");
+            recognition1.setVisibility(View.VISIBLE);
+        } else {
+            recognition1.setVisibility(View.GONE);
+        }
+
+        if (celeb_recogs[1] != null) {
+            recognition2.setText("2. " + celeb_recogs[1].first + " " + String.format("%.2f", celeb_recogs[1].second) + "%");
+            recognition2.setVisibility(View.VISIBLE);
+        } else {
+            recognition2.setVisibility(View.GONE);
+        }
+
+        if (celeb_recogs[2] != null) {
+            recognition3.setText("3. " + celeb_recogs[2].first + " " + String.format("%.2f", celeb_recogs[2].second) + "%");
+            recognition3.setVisibility(View.VISIBLE);
+        } else {
+            recognition3.setVisibility(View.GONE);
+        }
+    }
+
 
     private String[] loadCelebNamesFromCsv() {
         List<String> names = new ArrayList<>();
