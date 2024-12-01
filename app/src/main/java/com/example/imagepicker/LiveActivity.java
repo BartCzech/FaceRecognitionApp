@@ -435,7 +435,7 @@ public class LiveActivity extends AppCompatActivity implements ImageReader.OnIma
 
     //TODO: Celebrity recognition (256x256)
     public void performCelebRecognition(Face face) {
-        CelebRecognitionTFLite celebModel = new CelebRecognitionTFLite(getAssets(), "celeb_recognition.tflite");
+        CelebRecognitionTFLite celebModel = new CelebRecognitionTFLite(getAssets(), "celeb_recognition_old.tflite");
 
         // crop the face
         Rect bounds = face.getBoundingBox();

@@ -1,7 +1,6 @@
 package com.example.imagepicker;
 
 import android.annotation.SuppressLint;
-import android.app.Dialog;
 import android.content.ContentValues;
 import android.content.Intent;
 import android.content.pm.PackageManager;
@@ -19,8 +18,6 @@ import android.os.ParcelFileDescriptor;
 import android.provider.MediaStore;
 import android.util.Log;
 import android.view.View;
-import android.widget.Button;
-import android.widget.EditText;
 import android.widget.ImageView;
 import android.Manifest;
 import android.widget.TextView;
@@ -442,7 +439,7 @@ public class RecognitionActivity extends AppCompatActivity {
     //TODO: Celeb face recognition
     public void performCelebRecognition(Bitmap inputBitmap) {
         // Load the TFLite model
-        CelebRecognitionTFLite celebModel = new CelebRecognitionTFLite(getAssets(), "celeb_recognition.tflite");
+        CelebRecognitionTFLite celebModel = new CelebRecognitionTFLite(getAssets(), "celeb_recognition_old.tflite");
 
         // Run the model
         float[] output = celebModel.recognize(inputBitmap);
