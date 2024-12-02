@@ -81,7 +81,7 @@ public class LiveActivity extends AppCompatActivity implements ImageReader.OnIma
     FaceDetector detector;
 
     //TODO declare face recognizer
-    private FaceClassifier faceClassifier;
+    FaceClassifier faceClassifier = ClassifierSingleton.getFaceClassifier();
 
     boolean registerFace = false;
 
@@ -123,23 +123,6 @@ public class LiveActivity extends AppCompatActivity implements ImageReader.OnIma
         detector = FaceDetection.getClient(highAccuracyOpts);
 
 
-        //TODO initialize FACE Recognition
-        try {
-            faceClassifier =
-                    TFLiteFaceRecognition.create(
-                            getAssets(),
-                            "facenet.tflite",
-                            TF_OD_API_INPUT_SIZE2,
-                            false,getApplicationContext());
-
-        } catch (final IOException e) {
-            e.printStackTrace();
-            Toast toast =
-                    Toast.makeText(
-                            getApplicationContext(), "Classifier could not be initialized", Toast.LENGTH_SHORT);
-            toast.show();
-            finish();
-        }
 
         findViewById(R.id.imageView4).setOnClickListener(new View.OnClickListener() {
             @Override
@@ -355,8 +338,9 @@ public class LiveActivity extends AppCompatActivity implements ImageReader.OnIma
 
                                         for(Face face:faces) {
                                             final Rect bounds = face.getBoundingBox();
-//                                            performFaceRecognition(face);
-                                            performCelebRecognition(face);
+                                            // facenet or custom model update face on liveview
+                                            performFaceRecognition(face);
+//                                            performCelebRecognition(face);
 
                                         }
                                         registerFace = false;

@@ -87,7 +87,7 @@ public class RecognitionActivity extends AppCompatActivity {
     FaceDetector detector; // just declared
 
     // Face classifier declaration
-    FaceClassifier faceClassifier;
+    FaceClassifier faceClassifier = ClassifierSingleton.getFaceClassifier();
 
     List<FaceClassifier.Recognition> recognitions;
 
@@ -166,11 +166,11 @@ public class RecognitionActivity extends AppCompatActivity {
 
         // Initializing FaceDetector and FaceClassifier
         detector = FaceDetection.getClient(highAccuracyOpts);
-        try {
-            faceClassifier = TFLiteFaceRecognition.create(getAssets(), model, model_input_size, false, getApplicationContext());
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
+//        try {
+//            faceClassifier = TFLiteFaceRecognition.create(getAssets(), model, model_input_size, false, getApplicationContext());
+//        } catch (IOException e) {
+//            throw new RuntimeException(e);
+//        }
     }
 
     private void openCamera() {
@@ -482,7 +482,7 @@ public class RecognitionActivity extends AppCompatActivity {
         Log.d("CelebRecognition", "Recognized as: " + celebName + " with confidence: " + (maxValue * 100) + "%");
         float finalMaxValue = maxValue;
         runOnUiThread(() -> {
-            Toast.makeText(this, "You resemble " + celebName + " (" + (finalMaxValue * 100) + "%)", Toast.LENGTH_LONG).show();
+//            Toast.makeText(this, "You resemble " + celebName + " (" + (finalMaxValue * 100) + "%)", Toast.LENGTH_LONG).show();
         });
 
         // Update face results with custom model
