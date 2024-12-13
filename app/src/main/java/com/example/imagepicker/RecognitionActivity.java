@@ -20,6 +20,7 @@ import android.util.Log;
 import android.view.View;
 import android.widget.ImageView;
 import android.Manifest;
+import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -91,6 +92,8 @@ public class RecognitionActivity extends AppCompatActivity {
 
     List<FaceClassifier.Recognition> recognitions;
 
+    LinearLayout recognitionResultsLayout;
+
     // code to get the image from gallery and display it
     ActivityResultLauncher<Intent> galleryActivityResultLauncher = registerForActivityResult(
             new ActivityResultContracts.StartActivityForResult(),
@@ -107,7 +110,16 @@ public class RecognitionActivity extends AppCompatActivity {
                             input = rotateBitmap(input, galleryImageUri);
 
                             // Hide the instruction text?
+                            // Loop through all child views and set visibility to GONE
+                            for (int i = 0; i < recognitionResultsLayout.getChildCount(); i++) {
+                                View child = recognitionResultsLayout.getChildAt(i);
+                                child.setVisibility(View.GONE);
+                            }
 
+                            TextView waitingResults = findViewById(R.id.waitingResults);
+                            waitingResults.setVisibility(View.VISIBLE);
+                            
+                            // Set the image and detect face
                             imageView.setImageBitmap(input);
                             performFaceDetection(input);
                         } else {
@@ -128,6 +140,8 @@ public class RecognitionActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_recognition);
+
+        recognitionResultsLayout = findViewById(R.id.recognitionResultsLayout);
 
         imageView = findViewById(R.id.imageView2);
         galleryCard = findViewById(R.id.gallerycard);
@@ -210,7 +224,13 @@ public class RecognitionActivity extends AppCompatActivity {
             Bitmap input = uriToBitmap(cameraImageUri);
             input = rotateBitmap(input, cameraImageUri);
 
-            // Hide the results card?
+            // Loop through all child views and set visibility to GONE
+            for (int i = 0; i < recognitionResultsLayout.getChildCount(); i++) {
+                View child = recognitionResultsLayout.getChildAt(i);
+                child.setVisibility(View.GONE);
+            }
+            TextView waitingResults = findViewById(R.id.waitingResults);
+            waitingResults.setVisibility(View.VISIBLE);
 
             imageView.setImageBitmap(input);
             performFaceDetection(input);
@@ -324,7 +344,15 @@ public class RecognitionActivity extends AppCompatActivity {
 //                                            if (face.getTrackingId() != null) {
 //                                                int id = face.getTrackingId();
 //                                            }
+                                        } else {
+                                            // show no face detected
+                                            TextView waitingResults = findViewById(R.id.waitingResults);
+                                            waitingResults.setVisibility(View.GONE);
+
+                                            TextView noFaceText = findViewById(R.id.noFaceText);
+                                            noFaceText.setVisibility(View.VISIBLE);
                                         }
+
                                         // showing whole image with highlighted faces
                                         imageView.setImageBitmap(mutableBmp);
                                     }
@@ -382,11 +410,11 @@ public class RecognitionActivity extends AppCompatActivity {
                 p.setTextSize(150);
                 p.setStyle(Paint.Style.STROKE);
                 p.setStrokeWidth(15); // Border thickness
-                canvas.drawText(recognition.getTitle(), bound.left, bound.top, p); // Draw border
+//                canvas.drawText(recognition.getTitle(), bound.left, bound.top, p); // Draw border
 
                 p.setColor(Color.WHITE); // Text color
                 p.setStyle(Paint.Style.FILL);
-                canvas.drawText(recognition.getTitle(), bound.left, bound.top, p); // Draw text
+//                canvas.drawText(recognition.getTitle(), bound.left, bound.top, p); // Draw text
             }
             // Update face results with facenet
             updateRecognitionResults(recognitions);
@@ -395,15 +423,14 @@ public class RecognitionActivity extends AppCompatActivity {
 
     private void updateRecognitionResults(List<FaceClassifier.Recognition> recognitions) {
         // Get references to the views
-        TextView instructionText = findViewById(R.id.instructionText);
         TextView recognitionTitle = findViewById(R.id.recognitionTitle);
         TextView recognition1 = findViewById(R.id.recognition1);
         TextView recognition2 = findViewById(R.id.recognition2);
         TextView recognition3 = findViewById(R.id.recognition3);
 
-        // Hide the instruction text
-        instructionText.setVisibility(View.GONE);
-
+        // Hide the waiting text
+        TextView waitingResults = findViewById(R.id.waitingResults);
+        waitingResults.setVisibility(View.GONE);
 
         // Show the recognition results layout
         recognitionTitle.setVisibility(View.VISIBLE);
@@ -501,42 +528,42 @@ public class RecognitionActivity extends AppCompatActivity {
         celebModel.close(); // Clean up resources
     }
 
-    private void updateCelebRecognitionResults(Pair<String, Float>[] celeb_recogs) {
-        // Get references to the views
-        TextView instructionText = findViewById(R.id.instructionText);
-        TextView recognitionTitle = findViewById(R.id.recognitionTitle);
-        TextView recognition1 = findViewById(R.id.recognition1);
-        TextView recognition2 = findViewById(R.id.recognition2);
-        TextView recognition3 = findViewById(R.id.recognition3);
-
-        // Hide the instruction text
-        instructionText.setVisibility(View.GONE);
-
-        // Show the recognition results layout
-        recognitionTitle.setVisibility(View.VISIBLE);
-
-        // Update the text and visibility for each recognition result dynamically
-        if (celeb_recogs[0] != null) {
-            recognition1.setText("1. " + celeb_recogs[0].first + " " + String.format("%.2f", celeb_recogs[0].second) + "%");
-            recognition1.setVisibility(View.VISIBLE);
-        } else {
-            recognition1.setVisibility(View.GONE);
-        }
-
-        if (celeb_recogs[1] != null) {
-            recognition2.setText("2. " + celeb_recogs[1].first + " " + String.format("%.2f", celeb_recogs[1].second) + "%");
-            recognition2.setVisibility(View.VISIBLE);
-        } else {
-            recognition2.setVisibility(View.GONE);
-        }
-
-        if (celeb_recogs[2] != null) {
-            recognition3.setText("3. " + celeb_recogs[2].first + " " + String.format("%.2f", celeb_recogs[2].second) + "%");
-            recognition3.setVisibility(View.VISIBLE);
-        } else {
-            recognition3.setVisibility(View.GONE);
-        }
-    }
+//    private void updateCelebRecognitionResults(Pair<String, Float>[] celeb_recogs) {
+//        // Get references to the views
+//        TextView instructionText = findViewById(R.id.instructionText);
+//        TextView recognitionTitle = findViewById(R.id.recognitionTitle);
+//        TextView recognition1 = findViewById(R.id.recognition1);
+//        TextView recognition2 = findViewById(R.id.recognition2);
+//        TextView recognition3 = findViewById(R.id.recognition3);
+//
+//        // Hide the instruction text
+//        instructionText.setVisibility(View.GONE);
+//
+//        // Show the recognition results layout
+//        recognitionTitle.setVisibility(View.VISIBLE);
+//
+//        // Update the text and visibility for each recognition result dynamically
+//        if (celeb_recogs[0] != null) {
+//            recognition1.setText("1. " + celeb_recogs[0].first + " " + String.format("%.2f", celeb_recogs[0].second) + "%");
+//            recognition1.setVisibility(View.VISIBLE);
+//        } else {
+//            recognition1.setVisibility(View.GONE);
+//        }
+//
+//        if (celeb_recogs[1] != null) {
+//            recognition2.setText("2. " + celeb_recogs[1].first + " " + String.format("%.2f", celeb_recogs[1].second) + "%");
+//            recognition2.setVisibility(View.VISIBLE);
+//        } else {
+//            recognition2.setVisibility(View.GONE);
+//        }
+//
+//        if (celeb_recogs[2] != null) {
+//            recognition3.setText("3. " + celeb_recogs[2].first + " " + String.format("%.2f", celeb_recogs[2].second) + "%");
+//            recognition3.setVisibility(View.VISIBLE);
+//        } else {
+//            recognition3.setVisibility(View.GONE);
+//        }
+//    }
 
 
     private String[] loadCelebNamesFromCsv() {
