@@ -22,7 +22,6 @@ import android.widget.ImageView;
 import android.Manifest;
 import android.widget.LinearLayout;
 import android.widget.TextView;
-import android.widget.Toast;
 
 import androidx.activity.result.ActivityResult;
 import androidx.activity.result.ActivityResultCallback;
@@ -35,8 +34,6 @@ import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
 
 import com.example.imagepicker.Face_Recognition.FaceClassifier;
-import com.example.imagepicker.Face_Recognition.TFLiteFaceRecognition;
-import com.example.imagepicker.Face_Recognition.CelebRecognitionTFLite;
 import com.google.android.gms.tasks.OnFailureListener;
 import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.android.gms.tasks.Task;
@@ -46,16 +43,9 @@ import com.google.mlkit.vision.face.FaceDetector;
 import com.google.mlkit.vision.face.FaceDetectorOptions;
 import com.google.mlkit.vision.common.InputImage;
 
-import java.io.BufferedReader;
 import java.io.FileDescriptor;
 import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.util.ArrayList;
 import java.util.List;
-import java.util.PriorityQueue;
-
-import android.util.Pair;
 
 
 public class RecognitionActivity extends AppCompatActivity {
@@ -67,7 +57,6 @@ public class RecognitionActivity extends AppCompatActivity {
     private static final int CAMERA_REQUEST_CODE = 100;
     private Uri cameraImageUri;
 
-    String model = MainActivity.MODEL;
     int model_input_size = MainActivity.MODEL_INPUT_SIZE;
 
     // Face detector declaration
@@ -118,7 +107,7 @@ public class RecognitionActivity extends AppCompatActivity {
 
                             TextView waitingResults = findViewById(R.id.waitingResults);
                             waitingResults.setVisibility(View.VISIBLE);
-                            
+
                             // Set the image and detect face
                             imageView.setImageBitmap(input);
                             performFaceDetection(input);
@@ -134,8 +123,6 @@ public class RecognitionActivity extends AppCompatActivity {
     CardView galleryCard,cameraCard;
     ImageView imageView;
 
-    private String[] celebNames;
-
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -146,14 +133,6 @@ public class RecognitionActivity extends AppCompatActivity {
         imageView = findViewById(R.id.imageView2);
         galleryCard = findViewById(R.id.gallerycard);
         cameraCard = findViewById(R.id.cameracard);
-
-        // Load celebrity names from CSV
-        celebNames = loadCelebNamesFromCsv();
-
-        // Debugging: Log the first few names to ensure it's loaded correctly
-        for (int i = 0; i < Math.min(10, celebNames.length); i++) {
-            Log.d("CelebRecognition", "Loaded celeb name: " + celebNames[i]);
-        }
 
         // ask for permission of camera upon the first launch of the app
 //        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
@@ -183,11 +162,6 @@ public class RecognitionActivity extends AppCompatActivity {
 
         // Initializing FaceDetector
         detector = FaceDetection.getClient(highAccuracyOpts);
-//        try {
-//            faceClassifier = TFLiteFaceRecognition.create(getAssets(), model, model_input_size, false, getApplicationContext());
-//        } catch (IOException e) {
-//            throw new RuntimeException(e);
-//        }
     }
 
     private void openCamera() {
@@ -385,21 +359,11 @@ public class RecognitionActivity extends AppCompatActivity {
         Bitmap croppedFace = Bitmap.createBitmap(input, bound.left, bound.top, bound.width(), bound.height());
         // showing only cropped faces
 //            imageView.setImageBitmap(croppedFace);
-        // Create a separate, different size bitmap for celeb face
-        Bitmap celebScaledFace = Bitmap.createScaledBitmap(croppedFace, 256, 256, false); //
 
         croppedFace = Bitmap.createScaledBitmap(croppedFace, model_input_size, model_input_size, false);
         FaceClassifier.Recognition recognition = faceClassifier.recognizeImage(croppedFace, false);
 
         recognitions = faceClassifier.recognizeThreeFromImage(croppedFace, false);
-
-
-//        for (FaceClassifier.Recognition rec : recognitions) {
-//            Toast.makeText(RecognitionActivity.this, "Face of: " + rec.getTitle() + ", dist: " + rec.getDistance(), Toast.LENGTH_SHORT).show();
-//        }
-
-        //TODO: Step 2: Process cropped face for celebrity recognition (256x256)
-        performCelebRecognition(celebScaledFace); // Call celeb recognition
 
         if (recognition != null) {
             Log.d("tryFR", recognition.getTitle() + " " + recognition.getDistance());
@@ -470,135 +434,4 @@ public class RecognitionActivity extends AppCompatActivity {
         // Calculate confidence as a percentage, inversely proportional to the distance
         return (1 - (distance / MAX_DISTANCE_THRESHOLD)) * 100;
     }
-
-
-    //TODO: Celeb face recognition
-    public void performCelebRecognition(Bitmap inputBitmap) {
-        // Load the TFLite model
-        CelebRecognitionTFLite celebModel = new CelebRecognitionTFLite(getAssets(), "celeb_recognition_old.tflite");
-
-        // Run the model
-        float[] output = celebModel.recognize(inputBitmap);
-
-        // Sum up probabilities to check for proper softmax behavior
-        float sum = 0;
-        for (float value : output) {
-            sum += value;
-        }
-        Log.d("ModelOutput", "Sum of probabilities: " + sum);
-
-        // Log the top 5 predictions
-        PriorityQueue<Pair<Integer, Float>> pq = new PriorityQueue<>(5, (a, b) -> Float.compare(b.second, a.second));
-        for (int i = 0; i < output.length; i++) {
-            pq.add(new Pair<>(i, output[i]));
-        }
-
-        Pair<String, Float>[] celeb_recogs = new Pair[5];
-        for (int i = 0; i < 5 && !pq.isEmpty(); i++) {
-            Pair<Integer, Float> top = pq.poll();
-            celeb_recogs[i] = new Pair<>(getCelebrityNameFromIndex(top.first), top.second * 100);
-//            Log.d("ModelOutput", "Index: " + top.first + ", Confidence: " + (top.second * 100) + "%, Name: " + getCelebrityNameFromIndex(top.first));
-            Log.d("ModelOutput", "Name: " + celeb_recogs[i].first + ", Confidence: " + celeb_recogs[i].second + "%");
-        }
-
-        // Find the top prediction
-        int maxIndex = -1;
-        float maxValue = -1.0f;
-        for (int i = 0; i < output.length; i++) {
-            if (output[i] > maxValue) {
-                maxValue = output[i];
-                maxIndex = i;
-            }
-        }
-
-        // Map index to celebrity name
-        String celebName = getCelebrityNameFromIndex(maxIndex);
-
-        // Log and update UI
-        Log.d("CelebRecognition", "Recognized as: " + celebName + " with confidence: " + (maxValue * 100) + "%");
-        float finalMaxValue = maxValue;
-        runOnUiThread(() -> {
-//            Toast.makeText(this, "You resemble " + celebName + " (" + (finalMaxValue * 100) + "%)", Toast.LENGTH_LONG).show();
-        });
-
-        // Update face results with custom model
-//        updateCelebRecognitionResults(celeb_recogs);
-
-
-        celebModel.close(); // Clean up resources
-    }
-
-//    private void updateCelebRecognitionResults(Pair<String, Float>[] celeb_recogs) {
-//        // Get references to the views
-//        TextView instructionText = findViewById(R.id.instructionText);
-//        TextView recognitionTitle = findViewById(R.id.recognitionTitle);
-//        TextView recognition1 = findViewById(R.id.recognition1);
-//        TextView recognition2 = findViewById(R.id.recognition2);
-//        TextView recognition3 = findViewById(R.id.recognition3);
-//
-//        // Hide the instruction text
-//        instructionText.setVisibility(View.GONE);
-//
-//        // Show the recognition results layout
-//        recognitionTitle.setVisibility(View.VISIBLE);
-//
-//        // Update the text and visibility for each recognition result dynamically
-//        if (celeb_recogs[0] != null) {
-//            recognition1.setText("1. " + celeb_recogs[0].first + " " + String.format("%.2f", celeb_recogs[0].second) + "%");
-//            recognition1.setVisibility(View.VISIBLE);
-//        } else {
-//            recognition1.setVisibility(View.GONE);
-//        }
-//
-//        if (celeb_recogs[1] != null) {
-//            recognition2.setText("2. " + celeb_recogs[1].first + " " + String.format("%.2f", celeb_recogs[1].second) + "%");
-//            recognition2.setVisibility(View.VISIBLE);
-//        } else {
-//            recognition2.setVisibility(View.GONE);
-//        }
-//
-//        if (celeb_recogs[2] != null) {
-//            recognition3.setText("3. " + celeb_recogs[2].first + " " + String.format("%.2f", celeb_recogs[2].second) + "%");
-//            recognition3.setVisibility(View.VISIBLE);
-//        } else {
-//            recognition3.setVisibility(View.GONE);
-//        }
-//    }
-
-
-    private String[] loadCelebNamesFromCsv() {
-        List<String> names = new ArrayList<>();
-        try {
-            // Open the CSV file from assets
-            InputStream is = getAssets().open("celeb_names.csv");
-            BufferedReader reader = new BufferedReader(new InputStreamReader(is));
-
-            String line;
-            boolean isHeader = true; // Skip the header row
-            while ((line = reader.readLine()) != null) {
-                if (isHeader) {
-                    isHeader = false; // Skip the first line (header)
-                    continue;
-                }
-                // Split the line by commas
-                String[] parts = line.split(",");
-                if (parts.length > 1) {
-                    names.add(parts[1].trim()); // Add the name (second column) to the list
-                }
-            }
-            reader.close();
-        } catch (IOException e) {
-            Log.e("CelebRecognition", "Error reading celeb_names.csv: " + e.getMessage());
-            e.printStackTrace();
-        }
-
-        return names.toArray(new String[0]); // Convert the list to an array
-    }
-
-
-    // Implement mapping from index to celebrity name
-    private String getCelebrityNameFromIndex(int index) {
-        return index >= 0 && index < celebNames.length ? celebNames[index] : "Unknown";
-    }
-
 }
