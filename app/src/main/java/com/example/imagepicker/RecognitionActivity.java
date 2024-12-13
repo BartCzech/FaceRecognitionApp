@@ -105,6 +105,9 @@ public class RecognitionActivity extends AppCompatActivity {
 //                            imageView.setImageURI(galleryImageUri);
                             Bitmap input = uriToBitmap(galleryImageUri);
                             input = rotateBitmap(input, galleryImageUri);
+
+                            // Hide the instruction text?
+
                             imageView.setImageBitmap(input);
                             performFaceDetection(input);
                         } else {
@@ -164,7 +167,7 @@ public class RecognitionActivity extends AppCompatActivity {
             }
         });
 
-        // Initializing FaceDetector and FaceClassifier
+        // Initializing FaceDetector
         detector = FaceDetection.getClient(highAccuracyOpts);
 //        try {
 //            faceClassifier = TFLiteFaceRecognition.create(getAssets(), model, model_input_size, false, getApplicationContext());
@@ -206,6 +209,9 @@ public class RecognitionActivity extends AppCompatActivity {
             Log.d("URI retrieved", String.valueOf(cameraImageUri));
             Bitmap input = uriToBitmap(cameraImageUri);
             input = rotateBitmap(input, cameraImageUri);
+
+            // Hide the results card?
+
             imageView.setImageBitmap(input);
             performFaceDetection(input);
         }
@@ -273,7 +279,9 @@ public class RecognitionActivity extends AppCompatActivity {
                                         // Task completed successfully
                                         Log.d("tryFace", "faces len = " + faces.size());
 
-                                        for (Face face : faces) {
+                                        if (!faces.isEmpty()) { // this just for 1 face
+//                                        for (Face face : face) { // this is for numerous faces
+                                            Face face = faces.get(0);
                                             Rect bounds = face.getBoundingBox();
 
                                             Paint p = new Paint(); // styling the rectangle
@@ -395,6 +403,7 @@ public class RecognitionActivity extends AppCompatActivity {
 
         // Hide the instruction text
         instructionText.setVisibility(View.GONE);
+
 
         // Show the recognition results layout
         recognitionTitle.setVisibility(View.VISIBLE);
