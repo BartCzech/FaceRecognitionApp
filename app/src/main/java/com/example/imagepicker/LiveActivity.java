@@ -74,6 +74,7 @@ public class LiveActivity extends AppCompatActivity implements ImageReader.OnIma
     private static final String KEY_USE_FACING = "use_facing";
     private static final int CROP_SIZE = 1000;
     private static final int TF_OD_API_INPUT_SIZE2 = 160;
+    private static final float MAX_DISTANCE_THRESHOLD = 1.4f;
 
     private String[] celebNames;
 
@@ -397,8 +398,8 @@ public class LiveActivity extends AppCompatActivity implements ImageReader.OnIma
             if(registerFace){
                 registerFaceDialogue(crop,result);
             }else {
-                if (result.getDistance() < 0.75f) {
-                    confidence = result.getDistance();
+                if (result.getDistance() < 1.35f) {
+                    confidence = calculateConfidence(result.getDistance());
                     title = result.getTitle();
                 }
             }
@@ -415,6 +416,15 @@ public class LiveActivity extends AppCompatActivity implements ImageReader.OnIma
             mappedRecognitions.add(recognition);
         }
 
+    }
+
+    // Method to calculate confidence based on the distance
+    private float calculateConfidence(float distance) {
+        if (distance > MAX_DISTANCE_THRESHOLD) {
+            return 0.0f; // Beyond the threshold, it's considered an unlikely match
+        }
+        // Calculate confidence as a percentage, inversely proportional to the distance
+        return (1 - (distance / MAX_DISTANCE_THRESHOLD)) * 100;
     }
 
     //TODO: Celebrity recognition (256x256)
