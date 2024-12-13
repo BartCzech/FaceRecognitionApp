@@ -123,7 +123,6 @@ public class TFLiteFaceRecognition
                 distance += diff*diff;
             }
             distance = (float) Math.sqrt(distance);
-
             nearestList.add(new Pair<>(name, distance));
         }
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
@@ -155,7 +154,6 @@ public class TFLiteFaceRecognition
                 distance += diff * diff;
             }
             distance = (float) Math.sqrt(distance);
-
             nearestList.add(new Pair<>(name, distance));
         }
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
@@ -167,7 +165,7 @@ public class TFLiteFaceRecognition
             Pair<String, Float> match = nearestList.get(i);
             float confidence = calculateConfidence(match.second);
             System.out.println("Top " + (i + 1) + ": Name = " + match.first + ", Distance = " + match.second +
-                    ", Confidence = " + confidence + "%");
+                    ", Likeness score: " + confidence + "%");
         }
 
         // Return the top 3 nearest faces
@@ -217,6 +215,7 @@ public class TFLiteFaceRecognition
 
 
         float distance = Float.MAX_VALUE;
+
         String id = "0";
         String label = "?";
 
