@@ -33,9 +33,6 @@ public class TFLiteFaceRecognition
     //private static final int OUTPUT_SIZE = 512;
     private static final int OUTPUT_SIZE = 512;
 
-    // Only return this many results.
-    private static final int NUM_DETECTIONS = 1;
-
     // Float model
     private static final float IMAGE_MEAN = 128.0f;
     private static final float IMAGE_STD = 128.0f;
@@ -227,7 +224,6 @@ public class TFLiteFaceRecognition
                 distance = nearest.second;
             }
         }
-        final int numDetectionsOutput = 1;
         Recognition rec = new Recognition(
                 id,
                 label,
