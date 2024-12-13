@@ -77,7 +77,7 @@ public class RegisterActivity extends AppCompatActivity {
     FaceDetector detector; // just declared
 
     // Face classifier declaration
-    FaceClassifier faceClassifier;
+    FaceClassifier faceClassifier = ClassifierSingleton.getFaceClassifier();
 
     // code to get the image from gallery and display it
     ActivityResultLauncher<Intent> galleryActivityResultLauncher = registerForActivityResult(
@@ -142,13 +142,13 @@ public class RegisterActivity extends AppCompatActivity {
             }
         });
 
-        // Initializing FaceDetector and FaceClassifier
+        // Initializing FaceDetector
         detector = FaceDetection.getClient(highAccuracyOpts);
-        try {
-            faceClassifier = TFLiteFaceRecognition.create(getAssets(), model, model_input_size, false, getApplicationContext());
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
+//        try {
+//            faceClassifier = TFLiteFaceRecognition.create(getAssets(), model, model_input_size, false, getApplicationContext());
+//        } catch (IOException e) {
+//            throw new RuntimeException(e);
+//        }
     }
 
     private void openCamera() {
